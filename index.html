@@ -113,31 +113,132 @@
 
 
   <script>
-    const searchButton = document.getElementById("searchButton");
-    const searchInput = document.getElementById("searchInput");
+  const searchButton = document.getElementById("searchButton");
+  const searchInput = document.getElementById("searchInput");
 
-    function performSearch() {
+  const resultsSection = document.createElement("section");
+  resultsSection.id = "results";
+  resultsSection.className = "results";
+  document.querySelector(".hero").after(resultsSection);
 
-      const searchTerm = searchInput.value.trim();
+  async function performSearch() {
+    const query = searchInput.value.trim().toLowerCase();
 
-      if (searchTerm === "") {
-        alert("Enter a vehicle, FCC ID, key, SKU, or part number.");
-        return;
-      }
-
-      alert(
-        "Search is coming next! You searched for: " + searchTerm
-      );
+    if (!query) {
+      resultsSection.innerHTML = "<p>Please enter a search.</p>";
+      return;
     }
 
-    searchButton.addEventListener("click", performSearch);
+    try {
+      const response = await fetch("products.json");
+      const products = await response.json();
 
-    searchInput.addEventListener("keydown", function(event) {
-      if (event.key === "Enter") {
-        performSearch();
-      }
-    });
-  </script>
+      const matches = products.filter(product => {
+        const searchableText = [
+          product.title,
+          product.vehicle,
+          product.fccId,
+          product.oemPart,
+          ...(product.searchTerms || [])
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return searchableText.includes(query);
+      });
+
+      displayResults(matches, query);
+
+    } catch (error) {
+      resultsSection.innerHTML =
+        "<p>Something went wrong loading product data.</p>";
+
+      console.error(error);
+    }
+  }
+
+  function displayResults(products, query) {
+    if (products.length === 0) {
+      resultsSection.innerHTML = `
+        <div class="no-results">
+          <h2>No results found</h2>
+          <p>We don't have a match for "${query}" yet.</p>
+        </div>
+      `;
+      return;
+    }
+
+    resultsSection.innerHTML = products.map(product => {
+
+      const sortedSuppliers = [...product.suppliers]
+        .sort((a, b) => a.price - b.price);
+
+      const supplierRows = sortedSuppliers.map((supplier, index) => `
+        <div class="supplier-row">
+
+          <div class="supplier-info">
+            <strong>${supplier.name}</strong>
+            <span>${supplier.type}</span>
+          </div>
+
+          <div class="supplier-price">
+            $${supplier.price.toFixed(2)}
+            ${index === 0 ? '<span class="best-price">Lowest price</span>' : ''}
+          </div>
+
+          <div class="supplier-stock">
+            ${supplier.stock}
+          </div>
+
+          <div class="supplier-shipping">
+            ${supplier.shipping}
+          </div>
+
+          <a
+            class="supplier-button"
+            href="${supplier.url}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View Supplier
+          </a>
+
+        </div>
+      `).join("");
+
+      return `
+        <article class="product-result">
+
+          <div class="product-header">
+            <div>
+              <span class="result-label">MATCH FOUND</span>
+              <h2>${product.title}</h2>
+              <p>${product.vehicle}</p>
+            </div>
+          </div>
+
+          <div class="product-meta">
+            ${product.fccId ? `<span><strong>FCC ID:</strong> ${product.fccId}</span>` : ""}
+            ${product.oemPart ? `<span><strong>OEM/Part:</strong> ${product.oemPart}</span>` : ""}
+          </div>
+
+          <div class="supplier-table">
+            ${supplierRows}
+          </div>
+
+        </article>
+      `;
+    }).join("");
+  }
+
+  searchButton.addEventListener("click", performSearch);
+
+  searchInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      performSearch();
+    }
+  });
+</script>
 
 </body>
 </html>
