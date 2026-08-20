@@ -524,6 +524,87 @@ footer {
   background: #9f5b28;
 }
 
+/* PRODUCT IMPORTER */
+
+.admin-intro {
+  color: #776b60;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.import-box {
+  padding: 25px;
+  background: #f7f0e7;
+  border: 1px solid #e4d5c4;
+  border-radius: 14px;
+}
+
+.optional {
+  font-weight: 500;
+  color: #998b7e;
+  font-size: 13px;
+}
+
+#importButton {
+  width: 100%;
+  margin-top: 10px;
+}
+
+#importMessage,
+#saveMessage {
+  margin-top: 16px;
+  font-weight: 700;
+  color: #7b4d27;
+}
+
+.review-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid #e5d8ca;
+}
+
+.review-note {
+  color: #7d7166;
+  margin-bottom: 25px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.form-grid label {
+  margin-bottom: 0;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.source-links {
+  margin-top: 30px;
+  padding: 18px;
+  background: #f7f0e7;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #665b52;
+  overflow-wrap: anywhere;
+}
+
+.save-button {
+  margin-top: 25px !important;
+}
+
+@media (max-width: 700px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: auto;
+  }
+}
 #message {
   margin-top: 20px;
   font-weight: 700;
