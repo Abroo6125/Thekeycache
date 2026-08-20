@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>KeyCache Admin</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,101 +14,193 @@
 
     <section class="admin-card">
 
-      <h1>KeyCache Product Entry</h1>
+      <div class="badge">
+        KeyCache Admin
+      </div>
 
-      <p>
-        Add a locksmith product and supplier listing.
+      <h1>Import a Product</h1>
+
+      <p class="admin-intro">
+        Paste a supplier product link. KeyCache will try to pull the product information automatically.
       </p>
 
-      <form id="productForm">
 
-        <h2>Product</h2>
+      <!-- IMPORT SECTION -->
 
-        <label>
-          Product Title
-          <input id="title" required>
-        </label>
+      <div class="import-box">
 
         <label>
-          Vehicle
-          <input id="vehicle">
-        </label>
-
-        <label>
-          Years
-          <input id="years" placeholder="2023-2024">
-        </label>
-
-        <label>
-          FCC ID
-          <input id="fccId">
-        </label>
-
-        <label>
-          OEM / Part Number
-          <input id="oemPart">
-        </label>
-
-        <label>
-          Buttons
-          <input id="buttons" placeholder="5 Button">
-        </label>
-
-        <label class="checkbox-row">
-          <input type="checkbox" id="remoteStart">
-          Remote Start
-        </label>
-
-
-        <h2>Supplier Listing</h2>
-
-        <label>
-          Supplier Name
-          <input id="supplierName" required>
-        </label>
-
-        <label>
-          Supplier Product ID
-          <input id="supplierProductId">
-        </label>
-
-        <label>
-          Condition / Type
-          <input id="conditionType">
-        </label>
-
-        <label>
-          Price
+          Supplier Product URL
           <input
-            id="price"
-            type="number"
-            step="0.01"
-            required
+            id="productUrl"
+            type="url"
+            placeholder="https://supplier.com/product/..."
           >
         </label>
 
         <label>
-          Stock Status
-          <input id="stockStatus" placeholder="In stock">
+          Affiliate URL
+          <span class="optional">(optional)</span>
+
+          <input
+            id="affiliateUrl"
+            type="url"
+            placeholder="Paste your affiliate tracking link here"
+          >
         </label>
 
-        <label>
-          Shipping
-          <input id="shipping" placeholder="Check supplier">
-        </label>
-
-        <label>
-          Product URL
-          <input id="url" type="url" required>
-        </label>
-
-        <button type="submit">
-          Add Product
+        <button id="importButton">
+          Import Product
         </button>
 
-      </form>
+        <div id="importMessage"></div>
 
-      <div id="message"></div>
+      </div>
+
+
+      <!-- REVIEW SECTION -->
+
+      <form id="productForm" class="review-section" hidden>
+
+        <h2>Review Product</h2>
+
+        <p class="review-note">
+          Check the information below before saving it to KeyCache.
+        </p>
+
+
+        <div class="form-grid">
+
+          <label class="full-width">
+            Product Title
+            <input id="title" required>
+          </label>
+
+
+          <label>
+            Vehicle
+            <input id="vehicle">
+          </label>
+
+
+          <label>
+            Years
+            <input
+              id="years"
+              placeholder="2023-2024"
+            >
+          </label>
+
+
+          <label>
+            FCC ID
+            <input id="fccId">
+          </label>
+
+
+          <label>
+            OEM / Part Number
+            <input id="oemPart">
+          </label>
+
+
+          <label>
+            Buttons
+            <input
+              id="buttons"
+              placeholder="5 Button"
+            >
+          </label>
+
+
+          <label>
+            Condition / Type
+            <input id="conditionType">
+          </label>
+
+
+          <label>
+            Supplier
+            <input id="supplierName" required>
+          </label>
+
+
+          <label>
+            Supplier Product ID
+            <input id="supplierProductId">
+          </label>
+
+
+          <label>
+            Price
+            <input
+              id="price"
+              type="number"
+              step="0.01"
+            >
+          </label>
+
+
+          <label>
+            Stock Status
+            <input
+              id="stockStatus"
+              placeholder="In stock"
+            >
+          </label>
+
+
+          <label>
+            Shipping
+            <input
+              id="shipping"
+              placeholder="Check supplier"
+            >
+          </label>
+
+
+          <label class="checkbox-row">
+            <input
+              type="checkbox"
+              id="remoteStart"
+            >
+            Remote Start
+          </label>
+
+
+          <label class="full-width">
+            Notes
+            <input id="notes">
+          </label>
+
+        </div>
+
+
+        <div class="source-links">
+
+          <p>
+            <strong>Supplier URL:</strong>
+            <span id="sourceUrlDisplay"></span>
+          </p>
+
+          <p id="affiliateDisplayRow">
+            <strong>Affiliate URL:</strong>
+            <span id="affiliateUrlDisplay"></span>
+          </p>
+
+        </div>
+
+
+        <button
+          type="submit"
+          class="save-button"
+        >
+          Save to KeyCache
+        </button>
+
+        <div id="saveMessage"></div>
+
+      </form>
 
     </section>
 
@@ -115,62 +208,288 @@
 
 
   <script>
-    const form = document.getElementById("productForm");
-    const message = document.getElementById("message");
 
-    form.addEventListener("submit", async function(event) {
+    const importButton =
+      document.getElementById("importButton");
 
-      event.preventDefault();
+    const productUrl =
+      document.getElementById("productUrl");
 
-      const data = {
-        title: document.getElementById("title").value,
-        vehicle: document.getElementById("vehicle").value,
-        years: document.getElementById("years").value,
-        fccId: document.getElementById("fccId").value,
-        oemPart: document.getElementById("oemPart").value,
-        buttons: document.getElementById("buttons").value,
-        remoteStart: document.getElementById("remoteStart").checked,
+    const affiliateUrl =
+      document.getElementById("affiliateUrl");
 
-        supplierName: document.getElementById("supplierName").value,
-        supplierProductId: document.getElementById("supplierProductId").value,
-        conditionType: document.getElementById("conditionType").value,
-        price: Number(document.getElementById("price").value),
-        stockStatus: document.getElementById("stockStatus").value,
-        shipping: document.getElementById("shipping").value,
-        url: document.getElementById("url").value
-      };
+    const importMessage =
+      document.getElementById("importMessage");
 
-      message.textContent = "Saving...";
+    const productForm =
+      document.getElementById("productForm");
 
-      try {
+    const saveMessage =
+      document.getElementById("saveMessage");
 
-        const response = await fetch("/api/products", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(data)
-        });
 
-        const result = await response.json();
+    // --------------------------------
+    // IMPORT PRODUCT
+    // --------------------------------
 
-        if (!response.ok) {
-          throw new Error(result.error || "Unable to save product.");
+    importButton.addEventListener(
+      "click",
+      async function () {
+
+        const url =
+          productUrl.value.trim();
+
+        if (!url) {
+          importMessage.textContent =
+            "Paste a supplier product URL first.";
+          return;
         }
 
-        message.textContent = "Product saved successfully!";
+        importButton.disabled = true;
 
-        form.reset();
+        importButton.textContent =
+          "Importing...";
 
-      } catch (error) {
+        importMessage.textContent =
+          "Reading supplier page...";
 
-        console.error(error);
 
-        message.textContent =
-          "Something went wrong: " + error.message;
+        try {
+
+          const response = await fetch(
+            "/api/import-product",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                url: url
+              })
+            }
+          );
+
+
+          const result =
+            await response.json();
+
+
+          if (!response.ok) {
+            throw new Error(
+              result.error ||
+              "Unable to import product."
+            );
+          }
+
+
+          const data =
+            result.data || {};
+
+
+          // Fill review form
+
+          document.getElementById("title").value =
+            data.title || "";
+
+          document.getElementById("supplierName").value =
+            data.supplierName || "";
+
+          document.getElementById("supplierProductId").value =
+            data.supplierProductId || "";
+
+          document.getElementById("conditionType").value =
+            data.conditionType || "";
+
+          document.getElementById("price").value =
+            data.price || "";
+
+          document.getElementById("stockStatus").value =
+            data.stockStatus || "";
+
+          document.getElementById("shipping").value =
+            "Check supplier";
+
+
+          document.getElementById(
+            "sourceUrlDisplay"
+          ).textContent = url;
+
+
+          const affiliate =
+            affiliateUrl.value.trim();
+
+
+          document.getElementById(
+            "affiliateUrlDisplay"
+          ).textContent =
+            affiliate || "None";
+
+
+          productForm.hidden = false;
+
+
+          if (result.blocked) {
+
+            importMessage.textContent =
+              "Supplier blocked automatic reading. Fill in the missing fields below.";
+
+          } else {
+
+            importMessage.textContent =
+              "Import complete. Review the fields below.";
+
+          }
+
+
+          productForm.scrollIntoView({
+            behavior: "smooth"
+          });
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          importMessage.textContent =
+            "Import failed: " +
+            error.message;
+
+        } finally {
+
+          importButton.disabled = false;
+
+          importButton.textContent =
+            "Import Product";
+
+        }
+
       }
+    );
 
-    });
+
+
+    // --------------------------------
+    // SAVE PRODUCT
+    // --------------------------------
+
+    productForm.addEventListener(
+      "submit",
+      async function (event) {
+
+        event.preventDefault();
+
+        saveMessage.textContent =
+          "Saving...";
+
+
+        const data = {
+
+          title:
+            document.getElementById("title").value.trim(),
+
+          vehicle:
+            document.getElementById("vehicle").value.trim(),
+
+          years:
+            document.getElementById("years").value.trim(),
+
+          fccId:
+            document.getElementById("fccId").value.trim(),
+
+          oemPart:
+            document.getElementById("oemPart").value.trim(),
+
+          buttons:
+            document.getElementById("buttons").value.trim(),
+
+          remoteStart:
+            document.getElementById("remoteStart").checked,
+
+          notes:
+            document.getElementById("notes").value.trim(),
+
+          supplierName:
+            document.getElementById("supplierName").value.trim(),
+
+          supplierProductId:
+            document.getElementById("supplierProductId").value.trim(),
+
+          conditionType:
+            document.getElementById("conditionType").value.trim(),
+
+          price:
+            Number(
+              document.getElementById("price").value
+            ) || null,
+
+          stockStatus:
+            document.getElementById("stockStatus").value.trim(),
+
+          shipping:
+            document.getElementById("shipping").value.trim(),
+
+          url:
+            productUrl.value.trim(),
+
+          affiliateUrl:
+            affiliateUrl.value.trim()
+
+        };
+
+
+        try {
+
+          const response = await fetch(
+            "/api/products",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify(data)
+            }
+          );
+
+
+          const result =
+            await response.json();
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              result.error ||
+              result.details ||
+              "Unable to save product."
+            );
+
+          }
+
+
+          saveMessage.textContent =
+            "✓ Product saved to KeyCache!";
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          saveMessage.textContent =
+            "Save failed: " +
+            error.message;
+
+        }
+
+      }
+    );
+
   </script>
 
 </body>
