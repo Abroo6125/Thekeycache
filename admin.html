@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyCache Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <main class="admin-page">
+
+    <section class="admin-card">
+
+      <h1>KeyCache Product Entry</h1>
+
+      <p>
+        Add a locksmith product and supplier listing.
+      </p>
+
+      <form id="productForm">
+
+        <h2>Product</h2>
+
+        <label>
+          Product Title
+          <input id="title" required>
+        </label>
+
+        <label>
+          Vehicle
+          <input id="vehicle">
+        </label>
+
+        <label>
+          Years
+          <input id="years" placeholder="2023-2024">
+        </label>
+
+        <label>
+          FCC ID
+          <input id="fccId">
+        </label>
+
+        <label>
+          OEM / Part Number
+          <input id="oemPart">
+        </label>
+
+        <label>
+          Buttons
+          <input id="buttons" placeholder="5 Button">
+        </label>
+
+        <label class="checkbox-row">
+          <input type="checkbox" id="remoteStart">
+          Remote Start
+        </label>
+
+
+        <h2>Supplier Listing</h2>
+
+        <label>
+          Supplier Name
+          <input id="supplierName" required>
+        </label>
+
+        <label>
+          Supplier Product ID
+          <input id="supplierProductId">
+        </label>
+
+        <label>
+          Condition / Type
+          <input id="conditionType">
+        </label>
+
+        <label>
+          Price
+          <input
+            id="price"
+            type="number"
+            step="0.01"
+            required
+          >
+        </label>
+
+        <label>
+          Stock Status
+          <input id="stockStatus" placeholder="In stock">
+        </label>
+
+        <label>
+          Shipping
+          <input id="shipping" placeholder="Check supplier">
+        </label>
+
+        <label>
+          Product URL
+          <input id="url" type="url" required>
+        </label>
+
+        <button type="submit">
+          Add Product
+        </button>
+
+      </form>
+
+      <div id="message"></div>
+
+    </section>
+
+  </main>
+
+
+  <script>
+    const form = document.getElementById("productForm");
+    const message = document.getElementById("message");
+
+    form.addEventListener("submit", async function(event) {
+
+      event.preventDefault();
+
+      const data = {
+        title: document.getElementById("title").value,
+        vehicle: document.getElementById("vehicle").value,
+        years: document.getElementById("years").value,
+        fccId: document.getElementById("fccId").value,
+        oemPart: document.getElementById("oemPart").value,
+        buttons: document.getElementById("buttons").value,
+        remoteStart: document.getElementById("remoteStart").checked,
+
+        supplierName: document.getElementById("supplierName").value,
+        supplierProductId: document.getElementById("supplierProductId").value,
+        conditionType: document.getElementById("conditionType").value,
+        price: Number(document.getElementById("price").value),
+        stockStatus: document.getElementById("stockStatus").value,
+        shipping: document.getElementById("shipping").value,
+        url: document.getElementById("url").value
+      };
+
+      message.textContent = "Saving...";
+
+      try {
+
+        const response = await fetch("/api/products", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Unable to save product.");
+        }
+
+        message.textContent = "Product saved successfully!";
+
+        form.reset();
+
+      } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "Something went wrong: " + error.message;
+      }
+
+    });
+  </script>
+
+</body>
+</html>
