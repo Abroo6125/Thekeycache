@@ -443,3 +443,88 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* ADMIN PAGE */
+
+.admin-page {
+  min-height: 100vh;
+  padding: 70px 20px;
+}
+
+.admin-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px;
+  background: #fffaf4;
+  border: 1px solid #e7ddcf;
+  border-radius: 18px;
+  box-shadow: 0 14px 35px rgba(75, 53, 33, 0.08);
+}
+
+.admin-card h1 {
+  margin-top: 0;
+  font-size: 34px;
+}
+
+.admin-card h2 {
+  margin-top: 35px;
+  margin-bottom: 18px;
+  color: #9a5b29;
+}
+
+.admin-card label {
+  display: block;
+  margin-bottom: 18px;
+  font-weight: 700;
+  color: #4f463e;
+}
+
+.admin-card input {
+  width: 100%;
+  margin-top: 7px;
+  padding: 13px 14px;
+  border: 1px solid #d8cbbb;
+  border-radius: 9px;
+  background: #fffdf9;
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 15px;
+}
+
+.admin-card input:focus {
+  outline: 2px solid rgba(184, 109, 50, 0.25);
+  border-color: #b86d32;
+}
+
+.checkbox-row {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+
+.admin-card button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  background: #b86d32;
+  color: white;
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-card button:hover {
+  background: #9f5b28;
+}
+
+#message {
+  margin-top: 20px;
+  font-weight: 700;
+}
