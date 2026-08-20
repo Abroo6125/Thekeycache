@@ -80,8 +80,15 @@ nav a:hover {
 /* HERO */
 
 .hero {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 110px 25px 70px;
+  text-align: center;
   position: relative;
-  .hero::before {
+  isolation: isolate;
+}
+
+.hero::before {
   content: "";
   position: absolute;
   width: 420px;
@@ -95,12 +102,46 @@ nav a:hover {
     rgba(184, 109, 50, 0.08),
     transparent 70%
   );
-  z-index: -1;
+  z-index: -2;
 }
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 110px 25px 70px;
-  text-align: center;
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.11;
+
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(120, 82, 45, 0.55) 2px,
+      transparent 2.5px
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0 18px,
+      rgba(120, 82, 45, 0.18) 18px 20px,
+      transparent 20px 42px
+    );
+
+  background-size:
+    42px 42px,
+    84px 42px;
+
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7),
+    transparent 78%
+  );
+
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7),
+    transparent 78%
+  );
+
+  z-index: -1;
 }
 
 .badge {
@@ -134,38 +175,6 @@ nav a:hover {
   line-height: 1.6;
   color: #74695f;
 }
-
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.11;
-
-  background-image:
-    radial-gradient(circle, rgba(120, 82, 45, 0.55) 2px, transparent 2.5px),
-    linear-gradient(
-      90deg,
-      transparent 0 18px,
-      rgba(120, 82, 45, 0.18) 18px 20px,
-      transparent 20px 42px
-    );
-
-  background-size:
-    42px 42px,
-    84px 42px;
-
-  mask-image: linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.7),
-    transparent 78%
-  );
-
-  z-index: -1;
-}
-
-isolation: isolate;
-
 /* SEARCH */
 
 .search-card {
