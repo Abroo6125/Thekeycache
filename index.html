@@ -3,24 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KeyCache</title>
+
+  <title>KeyCache | Compare Locksmith Supplies</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <div class="container">
-    <h1>KeyCache</h1>
 
-    <p>Compare locksmith supplies across sellers.</p>
+  <header class="site-header">
+    <div class="logo">KeyCache</div>
 
-    <div class="search-box">
-      <input
-        type="text"
-        placeholder="Search by vehicle, FCC ID, or part number"
-      >
+    <nav>
+      <a href="#">Automotive</a>
+      <a href="#">Residential</a>
+      <a href="#">Commercial</a>
+      <a href="#">About</a>
+    </nav>
+  </header>
 
-      <button>Search</button>
-    </div>
-  </div>
+  <main>
+
+    <section class="hero">
+
+      <div class="badge">
+        Locksmith Supply Comparison
+      </div>
+
+      <h1>
+        Find the right locksmith product.
+        <span>Compare who has it.</span>
+      </h1>
+
+      <p class="hero-text">
+        Search locksmith suppliers in one place and compare pricing,
+        availability, product type, and purchasing options.
+      </p>
+
+      <div class="search-card">
+
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search vehicle, FCC ID, key, SKU, or part number"
+        >
+
+        <button id="searchButton">
+          Search
+        </button>
+
+      </div>
+
+      <p class="search-hint">
+        Example: 2021 Ford F-150, H92, M3N-A2C931426
+      </p>
+
+    </section>
+
+
+    <section class="features">
+
+      <div class="feature-card">
+        <h3>Compare Suppliers</h3>
+        <p>
+          See multiple purchasing options without opening a pile of supplier tabs.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <h3>Check Compatibility</h3>
+        <p>
+          Compare OEM, refurbished, and aftermarket options for the application you need.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <h3>Save Time & Money</h3>
+        <p>
+          Quickly spot better pricing, availability, and sourcing options.
+        </p>
+      </div>
+
+    </section>
+
+
+    <section class="coming-soon">
+
+      <p>
+        KeyCache is currently being built for professional locksmiths.
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <p>
+      © 2026 KeyCache
+    </p>
+
+    <p class="affiliate-disclosure">
+      Some supplier links may earn KeyCache a commission at no additional cost to you.
+      Rankings are not determined by commission.
+    </p>
+
+  </footer>
+
+
+  <script>
+    const searchButton = document.getElementById("searchButton");
+    const searchInput = document.getElementById("searchInput");
+
+    function performSearch() {
+
+      const searchTerm = searchInput.value.trim();
+
+      if (searchTerm === "") {
+        alert("Enter a vehicle, FCC ID, key, SKU, or part number.");
+        return;
+      }
+
+      alert(
+        "Search is coming next! You searched for: " + searchTerm
+      );
+    }
+
+    searchButton.addEventListener("click", performSearch);
+
+    searchInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        performSearch();
+      }
+    });
+  </script>
+
 </body>
 </html>
