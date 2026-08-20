@@ -1,0 +1,81 @@
+[
+  {
+    "id": "ford-h92-001",
+    "searchTerms": [
+      "ford h92",
+      "h92",
+      "5913441",
+      "ford transponder key"
+    ],
+    "title": "Ford H92 Transponder Key",
+    "vehicle": "Select Ford/Lincoln/Mercury applications",
+    "fccId": "",
+    "oemPart": "Strattec 5913441",
+    "suppliers": [
+      {
+        "name": "Supplier A",
+        "type": "OEM",
+        "price": 16.00,
+        "stock": "In stock",
+        "shipping": "Check supplier",
+        "url": "#"
+      },
+      {
+        "name": "Supplier B",
+        "type": "Aftermarket",
+        "price": 3.54,
+        "stock": "In stock",
+        "shipping": "Check supplier",
+        "url": "#"
+      },
+      {
+        "name": "Supplier C",
+        "type": "Aftermarket",
+        "price": 18.56,
+        "stock": "Check stock",
+        "shipping": "Check supplier",
+        "url": "#"
+      }
+    ]
+  },
+
+  {
+    "id": "ford-f150-smart-001",
+    "searchTerms": [
+      "2021 ford f150",
+      "2021 ford f-150",
+      "ford f150 smart key",
+      "ford f-150 smart key"
+    ],
+    "title": "Ford F-150 Smart Key",
+    "vehicle": "2021 Ford F-150",
+    "fccId": "Example FCC ID",
+    "oemPart": "To be verified",
+    "suppliers": [
+      {
+        "name": "Supplier A",
+        "type": "OEM",
+        "price": 129.99,
+        "stock": "Check stock",
+        "shipping": "Check supplier",
+        "url": "#"
+      },
+      {
+        "name": "Supplier B",
+        "type": "OEM Refurbished",
+        "price": 79.99,
+        "stock": "Check stock",
+        "shipping": "Check supplier",
+        "url": "#"
+      },
+      {
+        "name": "Supplier C",
+        "type": "Aftermarket",
+        "price": 39.99,
+        "stock": "Check stock",
+        "shipping": "Check supplier",
+        "url": "#"
+      }
+    ]
+  }
+]
