@@ -1,0 +1,12 @@
+{
+  "name": "thekeycache",
+  "compatibility_date": "2026-08-20",
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "keycache-db",
+      "database_id": "3731473c-52a4-4ec8-9056-1238df9031d6"
+    }
+  ]
+}
