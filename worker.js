@@ -1185,7 +1185,7 @@ async function searchSupplier(
         html,
         supplier.baseUrl,
         query,
-        5
+        15
       );
 
     if (!candidates.length) {
@@ -1318,7 +1318,13 @@ return {
         Date.now() - started,
 
       products:
-        detailedProducts
+  detailedProducts
+    .sort(
+      (a, b) =>
+        (b.matchScore || 0) -
+        (a.matchScore || 0)
+    )
+    .slice(0, 5)
     };
 
 
