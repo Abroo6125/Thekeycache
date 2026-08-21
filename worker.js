@@ -1211,98 +1211,114 @@ async function searchSupplier(
 
 
     // Fetch details for all top candidates.
-    const detailedProducts =
-      await Promise.all(
-        detailcandidates.map(
-          async candidate => {
+    const detailResults =
+  await Promise.allSettled(
+    detailCandidates.map(
+      async candidate => {
 
-            try {
-              const productResponse =
-                await fetchWithTimeout(
-                  candidate.url,
-                  3000
-                );
+        const productResponse =
+          await fetchWithTimeout(
+            candidate.url,
+            3000
+          );
 
-              const productHtml =
-                await productResponse.text();
+        const productHtml =
+          await productResponse.text();
 
-              const details =
-                extractProductDetails(
-                  productHtml,
-                  candidate.url
-                );
+        const details =
+          extractProductDetails(
+            productHtml,
+            candidate.url
+          );
 
-             const finalTitle =
-  details.title ||
-  candidate.title;
+        const finalTitle =
+          details.title ||
+          candidate.title;
 
-const finalScore =
-  scoreCandidate(
-    finalTitle,
-    candidate.url,
-    query
+        const finalScore =
+          scoreCandidate(
+            finalTitle,
+            candidate.url,
+            query
+          );
+
+        return {
+          supplier:
+            supplier.name,
+
+          title:
+            finalTitle,
+
+          price:
+            details.price,
+
+          sku:
+            details.sku,
+
+          stock:
+            details.stock,
+
+          type:
+            details.type,
+
+          url:
+            candidate.url,
+
+          matchScore:
+            finalScore
+        };
+      }
+    )
   );
 
-return {
-  supplier:
-    supplier.name,
 
-  title:
-    finalTitle,
+const detailedProducts =
+  detailResults.map(
+    (result, index) => {
 
-  price:
-    details.price,
+      if (
+        result.status ===
+        "fulfilled"
+      ) {
+        return result.value;
+      }
 
-  sku:
-    details.sku,
+      const candidate =
+        detailCandidates[index];
 
-  stock:
-    details.stock,
+      return {
+        supplier:
+          supplier.name,
 
-  type:
-    details.type,
+        title:
+          candidate.title,
 
-  url:
-    candidate.url,
+        price:
+          null,
 
-  matchScore:
-    finalScore
-};
+        sku:
+          "",
 
-            } catch (error) {
+        stock:
+          "Check supplier",
 
-              return {
-                supplier:
-                  supplier.name,
+        type:
+          guessProductType(
+            candidate.title
+          ),
 
-                title:
-                  candidate.title,
+        url:
+          candidate.url,
 
-                price:
-                  null,
+        matchScore:
+          candidate.score,
 
-                sku:
-                  "",
-
-                stock:
-                  "Check supplier",
-
-                type:
-                  guessProductType(
-                    candidate.title
-                  ),
-
-                url:
-                  candidate.url,
-
-                matchScore:
-                  candidate.score,
-
-                error:
-                  error.message
-              };
-            }
-          }
+        error:
+          result.reason?.message ||
+          "Product detail fetch failed."
+      };
+    }
+  );
         )
       );
 
