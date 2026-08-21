@@ -1148,8 +1148,7 @@ async function searchSupplier(
   supplier,
   query
 ) {
-  const started =
-    Date.now();
+  const started = Date.now();
 
   try {
     const response =
@@ -1158,20 +1157,18 @@ async function searchSupplier(
         10000
       );
 
-
     const html =
       await response.text();
 
-
-    const candidate =
-      findBestProductCandidate(
+    const candidates =
+      findProductCandidates(
         html,
         supplier.baseUrl,
-        query
+        query,
+        5
       );
 
-
-    if (!candidate) {
+    if (!candidates.length) {
       return {
         supplier:
           supplier.name,
@@ -1183,127 +1180,120 @@ async function searchSupplier(
           response.status,
 
         searchMs:
-          Date.now() -
-          started,
+          Date.now() - started,
 
         products: []
       };
     }
 
 
-    const detailStarted =
-      Date.now();
+    // Fetch details for all top candidates.
+    const detailedProducts =
+      await Promise.all(
+        candidates.map(
+          async candidate => {
 
+            try {
+              const productResponse =
+                await fetchWithTimeout(
+                  candidate.url,
+                  10000
+                );
 
-    try {
-      const productResponse =
-        await fetchWithTimeout(
-          candidate.url,
-          10000
-        );
+              const productHtml =
+                await productResponse.text();
 
+              const details =
+                extractProductDetails(
+                  productHtml,
+                  candidate.url
+                );
 
-      const productHtml =
-        await productResponse.text();
+              return {
+                supplier:
+                  supplier.name,
 
+                title:
+                  details.title ||
+                  candidate.title,
 
-      const details =
-        extractProductDetails(
-          productHtml,
-          candidate.url
-        );
+                price:
+                  details.price,
 
+                sku:
+                  details.sku,
 
-      return {
-        supplier:
-          supplier.name,
+                stock:
+                  details.stock,
 
-        ok: true,
+                type:
+                  details.type,
 
-        searchStatus:
-          response.status,
+                url:
+                  candidate.url,
 
-        searchMs:
-          Date.now() -
-          started,
+                matchScore:
+                  candidate.score
+              };
 
-        detailMs:
-          Date.now() -
-          detailStarted,
+            } catch (error) {
 
-        products: [
-          {
-            supplier:
-              supplier.name,
+              return {
+                supplier:
+                  supplier.name,
 
-            title:
-              details.title ||
-              candidate.title,
+                title:
+                  candidate.title,
 
-            price:
-              details.price,
+                price:
+                  null,
 
-            sku:
-              details.sku,
+                sku:
+                  "",
 
-            stock:
-              details.stock,
+                stock:
+                  "Check supplier",
 
-            type:
-              details.type,
+                type:
+                  guessProductType(
+                    candidate.title
+                  ),
 
-            url:
-              candidate.url
+                url:
+                  candidate.url,
+
+                matchScore:
+                  candidate.score,
+
+                error:
+                  error.message
+              };
+            }
           }
-        ]
-      };
+        )
+      );
 
-    } catch (error) {
-      return {
-        supplier:
-          supplier.name,
 
-        ok: false,
+    return {
+      supplier:
+        supplier.name,
 
-        searchStatus:
-          response.status,
+      ok:
+        response.ok,
 
-        searchMs:
-          Date.now() -
-          started,
+      searchStatus:
+        response.status,
 
-        error:
-          "Product detail fetch failed: " +
-          error.message,
+      searchMs:
+        Date.now() - started,
 
-        products: [
-          {
-            supplier:
-              supplier.name,
+      products:
+        detailedProducts
+    };
 
-            title:
-              candidate.title,
-
-            price: null,
-
-            sku: "",
-
-            stock:
-              "Check supplier",
-
-            type:
-              guessProductType(
-                candidate.title
-              ),
-
-            url:
-              candidate.url
-          }
-        ]
-      };
-    }
 
   } catch (error) {
+
     return {
       supplier:
         supplier.name,
@@ -1311,8 +1301,7 @@ async function searchSupplier(
       ok: false,
 
       searchMs:
-        Date.now() -
-        started,
+        Date.now() - started,
 
       error:
         error.message,
@@ -1328,98 +1317,58 @@ async function searchSupplier(
 // FIND BEST SEARCH RESULT
 // =========================================================
 
-function findBestProductCandidate(
+function findProductCandidates(
   html,
   baseUrl,
-  query
+  query,
+  limit = 5
 ) {
   const productLinkRegex =
     /<a[^>]+href=["']([^"']*\/products\/[^"'?#]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
 
-
   const candidates = [];
-  const seenUrls =
-    new Set();
+  const seenUrls = new Set();
 
   let match;
 
-
   while (
-    (
-      match =
-        productLinkRegex.exec(
-          html
-        )
-    ) !== null
+    (match = productLinkRegex.exec(html)) !== null
   ) {
-    let productUrl =
-      match[1];
+    let productUrl = match[1];
 
-
-    if (
-      productUrl.startsWith(
-        "//"
-      )
-    ) {
+    if (productUrl.startsWith("//")) {
       productUrl =
-        "https:" +
-        productUrl;
+        "https:" + productUrl;
+
+    } else if (productUrl.startsWith("/")) {
+      productUrl =
+        baseUrl + productUrl;
 
     } else if (
-      productUrl.startsWith(
-        "/"
-      )
+      !productUrl.startsWith("http")
     ) {
       productUrl =
-        baseUrl +
-        productUrl;
-
-    } else if (
-      !productUrl.startsWith(
-        "http"
-      )
-    ) {
-      productUrl =
-        baseUrl +
-        "/" +
-        productUrl;
+        baseUrl + "/" + productUrl;
     }
-
 
     productUrl =
       productUrl.split("?")[0];
 
-
-    if (
-      seenUrls.has(
-        productUrl
-      )
-    ) {
+    if (seenUrls.has(productUrl)) {
       continue;
     }
 
-
     let title =
-      stripHtml(
-        match[2]
-      );
-
+      stripHtml(match[2]);
 
     title =
-      cleanSearchTitle(
-        title
-      );
-
+      cleanSearchTitle(title);
 
     if (!title) {
       continue;
     }
 
-
-    seenUrls.add(
-      productUrl
-    );
-
+    seenUrls.add(productUrl);
 
     const score =
       scoreCandidate(
@@ -1428,26 +1377,21 @@ function findBestProductCandidate(
         query
       );
 
-
     candidates.push({
       title,
-      url:
-        productUrl,
+      url: productUrl,
       score
     });
   }
 
-
   candidates.sort(
     (a, b) =>
-      b.score -
-      a.score
+      b.score - a.score
   );
 
-
-  return (
-    candidates[0] ||
-    null
+  return candidates.slice(
+    0,
+    limit
   );
 }
 
