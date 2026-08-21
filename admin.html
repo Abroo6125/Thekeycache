@@ -96,6 +96,23 @@
           </label>
 
           <label>
+            Frequency
+            <input id="frequency" placeholder="315 MHz">
+          </label>
+
+          <label>
+            Chip ID
+            <input id="chipId" placeholder="4D63 80 Bit">
+          </label>
+
+          <label class="full-width">
+            Button Configuration
+            <input
+            id="buttonConfiguration"
+             placeholder="5 Button / Remote Start / Hatch"
+            >
+          </label>
+          <label>
             Buttons
             <input id="buttons" placeholder="5 Button">
           </label>
@@ -420,6 +437,15 @@
         buttons:
           document.getElementById("buttons").value.trim(),
 
+        frequency:
+          document.getElementById("frequency").value.trim(),
+
+        chipId:
+          document.getElementById("chipId").value.trim(),
+
+        buttonConfiguration:
+          document.getElementById("buttonConfiguration").value.trim(),
+
         remoteStart:
           document.getElementById("remoteStart").checked,
 
@@ -707,6 +733,15 @@
 
         document.getElementById("buttons").value =
           product.buttons || "";
+
+        document.getElementById("frequency").value =
+          product.frequency || "";
+
+        document.getElementById("chipId").value =
+          product.chip_id || "";
+
+        document.getElementById("buttonConfiguration").value =
+          product.button_configuration || "";
 
         document.getElementById("remoteStart").checked =
           Boolean(product.remote_start);
