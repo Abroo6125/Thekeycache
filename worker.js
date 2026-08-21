@@ -1463,15 +1463,15 @@ function scoreCandidate(
   query
 ) {
   const titleLower =
-    String(title)
+    String(title || "")
       .toLowerCase();
 
   const urlLower =
-    String(productUrl)
+    String(productUrl || "")
       .toLowerCase();
 
   const queryLower =
-    String(query)
+    String(query || "")
       .toLowerCase()
       .trim();
 
@@ -1479,10 +1479,11 @@ function scoreCandidate(
   let score = 0;
 
 
-  if (
-    titleLower ===
-    queryLower
-  ) {
+  // =====================================
+  // BASIC MATCHING
+  // =====================================
+
+  if (titleLower === queryLower) {
     score += 500;
   }
 
@@ -1492,7 +1493,7 @@ function scoreCandidate(
       queryLower
     )
   ) {
-    score += 200;
+    score += 250;
   }
 
 
@@ -1511,16 +1512,14 @@ function scoreCandidate(
       .filter(Boolean);
 
 
-  for (
-    const word
-    of words
-  ) {
+  for (const word of words) {
+
     if (
       titleLower.includes(
         word
       )
     ) {
-      score += 30;
+      score += 40;
     }
 
 
@@ -1529,14 +1528,102 @@ function scoreCandidate(
         word
       )
     ) {
-      score += 10;
+      score += 15;
     }
   }
 
 
+
+  // =====================================
+  // LOCKSMITH PRODUCT BOOSTS
+  // =====================================
+
+  // Exact H92-PT family is preferable
+  // when someone searches H92.
+
+  if (
+    queryLower.includes("h92") &&
+    titleLower.includes("h92-pt")
+  ) {
+    score += 120;
+  }
+
+
+  // Favor common identifying information
+  // for the H92 family.
+
+  if (
+    queryLower.includes("h92") &&
+    (
+      titleLower.includes("5913441") ||
+      urlLower.includes("5913441")
+    )
+  ) {
+    score += 150;
+  }
+
+
+  if (
+    queryLower.includes("h92") &&
+    (
+      titleLower.includes("164-r8040") ||
+      urlLower.includes("164-r8040")
+    )
+  ) {
+    score += 150;
+  }
+
+
+  if (
+    queryLower.includes("h92") &&
+    titleLower.includes("strattec")
+  ) {
+    score += 75;
+  }
+
+
+
+  // =====================================
+  // BULK / BUNDLE PENALTIES
+  // =====================================
+
+  const userAskedForBulk =
+    /\b(pack|bundle|bulk|x\d+|\d+\s*pack)\b/i
+      .test(queryLower);
+
+
+  if (!userAskedForBulk) {
+
+    const bulkTerms = [
+      "pack of 10",
+      "10 pack",
+      "10-pack",
+      "pk10",
+      "x10",
+      "bundle of 10",
+      "bundle",
+      "bulk"
+    ];
+
+
+    for (
+      const term
+      of bulkTerms
+    ) {
+
+      if (
+        titleLower.includes(term) ||
+        urlLower.includes(term)
+      ) {
+        score -= 400;
+      }
+    }
+  }
+
+
+
   return score;
 }
-
 
 
 // =========================================================
