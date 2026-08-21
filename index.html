@@ -2,17 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>KeyCache | Compare Locksmith Supplies</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  <link rel="stylesheet" href="style.css">
+  <title>
+    KeyCache | Compare Locksmith Supplies
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
+
 
 <body>
 
+
+  <!-- ===================================== -->
+  <!-- HEADER -->
+  <!-- ===================================== -->
+
   <header class="site-header">
-    <div class="logo">KeyCache</div>
+
+    <div class="logo">
+      KeyCache
+    </div>
 
     <nav>
       <a href="#">Automotive</a>
@@ -20,9 +38,17 @@
       <a href="#">Commercial</a>
       <a href="#">About</a>
     </nav>
+
   </header>
 
+
+
   <main>
+
+
+    <!-- ===================================== -->
+    <!-- HERO -->
+    <!-- ===================================== -->
 
     <section class="hero">
 
@@ -30,15 +56,24 @@
         Locksmith Supply Comparison
       </div>
 
+
       <h1>
         Find the right locksmith product.
-        <span>Compare who has it.</span>
+
+        <span>
+          Compare who has it.
+        </span>
       </h1>
 
+
       <p class="hero-text">
-        Search locksmith suppliers in one place and compare pricing,
-        availability, product type, and purchasing options.
+        Search locksmith suppliers in one place
+        and compare pricing, availability,
+        product type, and purchasing options.
       </p>
+
+
+      <!-- SEARCH BAR -->
 
       <div class="search-card">
 
@@ -54,49 +89,90 @@
 
       </div>
 
+
       <p class="search-hint">
-        Example: 2021 Ford F-150, H92, M3N-A2C931426
+        Example: 2021 Ford F-150, H92,
+        M3N-A2C931426
       </p>
 
     </section>
 
+
+
+    <!-- ===================================== -->
+    <!-- FEATURES -->
+    <!-- ===================================== -->
 
     <section class="features">
 
       <div class="feature-card">
-        <h3>Compare Suppliers</h3>
+
+        <h3>
+          Compare Suppliers
+        </h3>
+
         <p>
-          See multiple purchasing options without opening a pile of supplier tabs.
+          See multiple purchasing options
+          without opening a pile of supplier
+          tabs.
         </p>
+
       </div>
 
-      <div class="feature-card">
-        <h3>Check Compatibility</h3>
-        <p>
-          Compare OEM, refurbished, and aftermarket options for the application you need.
-        </p>
-      </div>
 
       <div class="feature-card">
-        <h3>Save Time & Money</h3>
+
+        <h3>
+          Check Compatibility
+        </h3>
+
         <p>
-          Quickly spot better pricing, availability, and sourcing options.
+          Compare OEM, refurbished, and
+          aftermarket options for the
+          application you need.
         </p>
+
+      </div>
+
+
+      <div class="feature-card">
+
+        <h3>
+          Save Time & Money
+        </h3>
+
+        <p>
+          Quickly spot better pricing,
+          availability, and sourcing options.
+        </p>
+
       </div>
 
     </section>
 
+
+
+    <!-- ===================================== -->
+    <!-- COMING SOON -->
+    <!-- ===================================== -->
 
     <section class="coming-soon">
 
       <p>
-        KeyCache is currently being built for professional locksmiths.
+        KeyCache is currently being built
+        for professional locksmiths.
       </p>
 
     </section>
 
+
   </main>
 
+
+
+  <!-- ===================================== -->
+  <!-- FOOTER -->
+  <!-- ===================================== -->
 
   <footer>
 
@@ -105,149 +181,761 @@
     </p>
 
     <p class="affiliate-disclosure">
-      Some supplier links may earn KeyCache a commission at no additional cost to you.
-      Rankings are not determined by commission.
+      Some supplier links may earn KeyCache
+      a commission at no additional cost to
+      you. Rankings are not determined by
+      commission.
     </p>
 
   </footer>
 
 
+
+  <!-- ===================================== -->
+  <!-- SEARCH SCRIPT -->
+  <!-- ===================================== -->
+
   <script>
-  const searchButton = document.getElementById("searchButton");
-  const searchInput = document.getElementById("searchInput");
 
-  const resultsSection = document.createElement("section");
-  resultsSection.id = "results";
-  resultsSection.className = "results";
-  document.querySelector(".hero").after(resultsSection);
+    const searchButton =
+      document.getElementById(
+        "searchButton"
+      );
 
-  async function performSearch() {
-    const query = searchInput.value.trim().toLowerCase();
+    const searchInput =
+      document.getElementById(
+        "searchInput"
+      );
 
-    if (!query) {
-      resultsSection.innerHTML = "<p>Please enter a search.</p>";
-      return;
-    }
 
-    try {
-     const response = await fetch(
-  "/api/search?q=" + encodeURIComponent(query)
-);
+    // -------------------------------------
+    // CREATE RESULTS AREA
+    // -------------------------------------
 
-const result = await response.json();
+    const resultsSection =
+      document.createElement(
+        "section"
+      );
 
-if (!response.ok) {
-  throw new Error(result.error || "Search failed.");
-}
+    resultsSection.id =
+      "results";
 
-displayResults(result.products, query);
+    resultsSection.className =
+      "results";
 
-    } catch (error) {
-      resultsSection.innerHTML =
-        "<p>Something went wrong loading product data.</p>";
 
-      console.error(error);
-    }
-  }
+    document
+      .querySelector(".hero")
+      .after(
+        resultsSection
+      );
 
-  function displayResults(products, query) {
-    if (products.length === 0) {
+
+
+    // =====================================
+    // SEARCH
+    // =====================================
+
+    async function performSearch() {
+
+      const query =
+        searchInput.value.trim();
+
+
+      if (!query) {
+
+        resultsSection.innerHTML = `
+          <div class="no-results">
+
+            <p>
+              Enter a vehicle, FCC ID,
+              key, SKU, or part number.
+            </p>
+
+          </div>
+        `;
+
+        return;
+      }
+
+
       resultsSection.innerHTML = `
         <div class="no-results">
-          <h2>No results found</h2>
-          <p>We don't have a match for "${query}" yet.</p>
-        </div>
-      `;
-      return;
-    }
 
-    resultsSection.innerHTML = products.map(product => {
-
-      const sortedSuppliers = [...product.suppliers]
-  .sort((a, b) => {
-    const priceA =
-      typeof a.price === "number"
-        ? a.price
-        : Infinity;
-
-    const priceB =
-      typeof b.price === "number"
-        ? b.price
-        : Infinity;
-
-    return priceA - priceB;
-  });
-
-      const supplierRows = sortedSuppliers.map((supplier, index) => `
-        <div class="supplier-row">
-
-          <div class="supplier-info">
-            <strong>${supplier.name}</strong>
-            <span>${supplier.type}</span>
-          </div>
-
-          <div class="supplier-price">
-            ${typeof supplier.price === "number"
-  ? "$" + supplier.price.toFixed(2)
-  : "Check price"}
-            ${index === 0 && typeof supplier.price === "number"
-  ? '<span class="best-price">Lowest price</span>'
-  : ''}
-          </div>
-
-          <div class="supplier-stock">
-            ${supplier.stock}
-          </div>
-
-          <div class="supplier-shipping">
-            ${supplier.shipping}
-          </div>
-
-          <a
-            class="supplier-button"
-            href="${supplier.url}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            View Supplier
-          </a>
+          <p>
+            Searching KeyCache...
+          </p>
 
         </div>
-      `).join("");
-
-      return `
-        <article class="product-result">
-
-          <div class="product-header">
-            <div>
-              <span class="result-label">MATCH FOUND</span>
-              <h2>${product.title}</h2>
-              <p>${product.vehicle}</p>
-            </div>
-          </div>
-
-          <div class="product-meta">
-            ${product.fccId ? `<span><strong>FCC ID:</strong> ${product.fccId}</span>` : ""}
-            ${product.oemPart ? `<span><strong>OEM/Part:</strong> ${product.oemPart}</span>` : ""}
-          </div>
-
-          <div class="supplier-table">
-            ${supplierRows}
-          </div>
-
-        </article>
       `;
-    }).join("");
-  }
 
-  searchButton.addEventListener("click", performSearch);
 
-  searchInput.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      performSearch();
+      try {
+
+        const response =
+          await fetch(
+            "/api/search?q=" +
+            encodeURIComponent(
+              query
+            )
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.error ||
+            "Search failed."
+          );
+        }
+
+
+        displayResults(
+          result.products || [],
+          query
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "SEARCH ERROR:",
+          error
+        );
+
+
+        resultsSection.innerHTML = `
+          <div class="no-results">
+
+            <h2>
+              Search error
+            </h2>
+
+            <p>
+              Something went wrong
+              loading KeyCache results.
+            </p>
+
+          </div>
+        `;
+      }
     }
-  });
-</script>
+
+
+
+    // =====================================
+    // DISPLAY RESULTS
+    // =====================================
+
+    function displayResults(
+      products,
+      query
+    ) {
+
+      if (
+        !Array.isArray(products) ||
+        products.length === 0
+      ) {
+
+        resultsSection.innerHTML = `
+          <div class="no-results">
+
+            <h2>
+              No results found
+            </h2>
+
+            <p>
+              We don't have a match for
+              "${escapeHtml(query)}" yet.
+            </p>
+
+          </div>
+        `;
+
+        return;
+      }
+
+
+      resultsSection.innerHTML =
+        products
+          .map(product => {
+
+
+            // ---------------------------------
+            // SORT SUPPLIERS BY PRICE
+            // ---------------------------------
+
+            const sortedSuppliers =
+              [
+                ...(
+                  product.suppliers ||
+                  []
+                )
+              ]
+                .sort(
+                  (a, b) => {
+
+                    const priceA =
+                      typeof a.price ===
+                      "number"
+                        ? a.price
+                        : Infinity;
+
+
+                    const priceB =
+                      typeof b.price ===
+                      "number"
+                        ? b.price
+                        : Infinity;
+
+
+                    return (
+                      priceA -
+                      priceB
+                    );
+                  }
+                );
+
+
+
+            // ---------------------------------
+            // FIND LOWEST NUMERIC PRICE
+            // ---------------------------------
+
+            const numericPrices =
+              sortedSuppliers
+                .filter(
+                  supplier =>
+                    typeof supplier.price ===
+                    "number"
+                )
+                .map(
+                  supplier =>
+                    supplier.price
+                );
+
+
+            const lowestPrice =
+              numericPrices.length > 0
+                ? Math.min(
+                    ...numericPrices
+                  )
+                : null;
+
+
+
+            // ---------------------------------
+            // BUILD SUPPLIER ROWS
+            // ---------------------------------
+
+            let supplierRows = "";
+
+
+            if (
+              sortedSuppliers.length ===
+              0
+            ) {
+
+              supplierRows = `
+                <div class="supplier-row">
+
+                  <p>
+                    No supplier listings
+                    available yet.
+                  </p>
+
+                </div>
+              `;
+
+            } else {
+
+              supplierRows =
+                sortedSuppliers
+                  .map(
+                    supplier => {
+
+
+                      // PRICE
+
+                      const priceDisplay =
+                        typeof supplier.price ===
+                        "number"
+                          ? "$" +
+                            supplier.price
+                              .toFixed(2)
+
+                          : "Check price";
+
+
+
+                      // LOWEST PRICE BADGE
+
+                      const isLowestPrice =
+                        lowestPrice !== null &&
+                        typeof supplier.price ===
+                          "number" &&
+                        supplier.price ===
+                          lowestPrice;
+
+
+                      const lowestPriceBadge =
+                        isLowestPrice
+                          ? `
+                            <span
+                              class="best-price"
+                            >
+                              Lowest price
+                            </span>
+                          `
+                          : "";
+
+
+
+                      // STOCK
+
+                      const stockDisplay =
+                        supplier.stock ||
+                        "Check stock";
+
+
+
+                      // SHIPPING
+
+                      const shippingDisplay =
+                        supplier.shipping ||
+                        "Check supplier";
+
+
+
+                      // TYPE
+
+                      const typeDisplay =
+                        supplier.type ||
+                        "Type not listed";
+
+
+
+                      // LINK
+
+                      const supplierUrl =
+                        supplier.url ||
+                        "#";
+
+
+
+                      return `
+                        <div
+                          class="supplier-row"
+                        >
+
+
+                          <div
+                            class="supplier-info"
+                          >
+
+                            <strong>
+                              ${escapeHtml(
+                                supplier.name ||
+                                "Supplier"
+                              )}
+                            </strong>
+
+                            <span>
+                              ${escapeHtml(
+                                typeDisplay
+                              )}
+                            </span>
+
+                          </div>
+
+
+
+                          <div
+                            class="supplier-price"
+                          >
+
+                            ${priceDisplay}
+
+                            ${lowestPriceBadge}
+
+                          </div>
+
+
+
+                          <div
+                            class="supplier-stock"
+                          >
+
+                            ${escapeHtml(
+                              stockDisplay
+                            )}
+
+                          </div>
+
+
+
+                          <div
+                            class="supplier-shipping"
+                          >
+
+                            ${escapeHtml(
+                              shippingDisplay
+                            )}
+
+                          </div>
+
+
+
+                          <a
+                            class="supplier-button"
+
+                            href="${escapeAttribute(
+                              supplierUrl
+                            )}"
+
+                            target="_blank"
+
+                            rel="noopener noreferrer"
+                          >
+                            View Supplier
+                          </a>
+
+
+                        </div>
+                      `;
+                    }
+                  )
+                  .join("");
+            }
+
+
+
+            // ---------------------------------
+            // PRODUCT META INFORMATION
+            // ---------------------------------
+
+            const details = [];
+
+
+            if (
+              product.fccId
+            ) {
+
+              details.push(`
+                <span>
+
+                  <strong>
+                    FCC ID:
+                  </strong>
+
+                  ${escapeHtml(
+                    product.fccId
+                  )}
+
+                </span>
+              `);
+            }
+
+
+
+            if (
+              product.oemPart
+            ) {
+
+              details.push(`
+                <span>
+
+                  <strong>
+                    OEM / Part:
+                  </strong>
+
+                  ${escapeHtml(
+                    product.oemPart
+                  )}
+
+                </span>
+              `);
+            }
+
+
+
+            if (
+              product.frequency
+            ) {
+
+              details.push(`
+                <span>
+
+                  <strong>
+                    Frequency:
+                  </strong>
+
+                  ${escapeHtml(
+                    product.frequency
+                  )}
+
+                </span>
+              `);
+            }
+
+
+
+            if (
+              product.chipId
+            ) {
+
+              details.push(`
+                <span>
+
+                  <strong>
+                    Chip:
+                  </strong>
+
+                  ${escapeHtml(
+                    product.chipId
+                  )}
+
+                </span>
+              `);
+            }
+
+
+
+            if (
+              product.buttonConfiguration
+            ) {
+
+              details.push(`
+                <span>
+
+                  <strong>
+                    Buttons:
+                  </strong>
+
+                  ${escapeHtml(
+                    product.buttonConfiguration
+                  )}
+
+                </span>
+              `);
+            }
+
+
+
+            // ---------------------------------
+            // VEHICLE / YEAR DISPLAY
+            // ---------------------------------
+
+            let vehicleLine = "";
+
+
+            if (
+              product.vehicle ||
+              product.years
+            ) {
+
+              vehicleLine = `
+                <p>
+
+                  ${
+                    product.vehicle
+                      ? escapeHtml(
+                          product.vehicle
+                        )
+                      : ""
+                  }
+
+                  ${
+                    product.vehicle &&
+                    product.years
+                      ? " • "
+                      : ""
+                  }
+
+                  ${
+                    product.years
+                      ? escapeHtml(
+                          product.years
+                        )
+                      : ""
+                  }
+
+                </p>
+              `;
+            }
+
+
+
+            // ---------------------------------
+            // PRODUCT CARD
+            // ---------------------------------
+
+            return `
+              <article
+                class="product-result"
+              >
+
+
+                <div
+                  class="product-header"
+                >
+
+                  <div>
+
+                    <span
+                      class="result-label"
+                    >
+                      MATCH FOUND
+                    </span>
+
+
+                    <h2>
+                      ${escapeHtml(
+                        product.title ||
+                        "Untitled Product"
+                      )}
+                    </h2>
+
+
+                    ${vehicleLine}
+
+                  </div>
+
+                </div>
+
+
+
+                ${
+                  details.length > 0
+                    ? `
+                      <div
+                        class="product-meta"
+                      >
+
+                        ${details.join("")}
+
+                      </div>
+                    `
+                    : ""
+                }
+
+
+
+                <div
+                  class="supplier-table"
+                >
+
+                  ${supplierRows}
+
+                </div>
+
+
+              </article>
+            `;
+          })
+          .join("");
+    }
+
+
+
+    // =====================================
+    // SEARCH BUTTON
+    // =====================================
+
+    searchButton.addEventListener(
+      "click",
+      performSearch
+    );
+
+
+
+    // =====================================
+    // ENTER KEY SEARCH
+    // =====================================
+
+    searchInput.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (
+          event.key ===
+          "Enter"
+        ) {
+
+          performSearch();
+        }
+      }
+    );
+
+
+
+    // =====================================
+    // HTML SAFETY HELPERS
+    // =====================================
+
+    function escapeHtml(
+      value
+    ) {
+
+      return String(
+        value ?? ""
+      )
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+        .replace(
+          /</g,
+          "&lt;"
+        )
+        .replace(
+          />/g,
+          "&gt;"
+        )
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+        .replace(
+          /'/g,
+          "&#039;"
+        );
+    }
+
+
+
+    function escapeAttribute(
+      value
+    ) {
+
+      return String(
+        value ?? ""
+      )
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+        .replace(
+          /</g,
+          "&lt;"
+        )
+        .replace(
+          />/g,
+          "&gt;"
+        );
+    }
+
+
+  </script>
+
 
 </body>
 </html>
