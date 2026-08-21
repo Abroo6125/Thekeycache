@@ -1594,18 +1594,34 @@ function scoreCandidate(
 
   if (!userAskedForBulk) {
 
-    const bulkTerms = [
-      "pack of 10",
-      "10 pack",
-      "10-pack",
-      "pk10",
-      "x10",
-      "bundle of 10",
-      "bundle",
-      "bulk"
-    ];
+const bulkTerms = [
+  "pack of 10",
+  "pack-of-10",
+  "10 pack",
+  "10-pack",
+  "pk10",
+  "x10",
+  "bundle of 10",
+  "bundle-of-10",
+  "bundle",
+  "bulk"
+];
 
+// Catch quantity wording even when suppliers
+// use spaces, hyphens, underscores, or URL formatting.
+const bulkPattern =
+  /(?:pack|bundle)[\s_-]*(?:of[\s_-]*)?\d+|\d+[\s_-]*(?:pack|bundle)|x\d+|pk\d+/i;
 
+if (
+  !userAskedForBulk &&
+  (
+    bulkPattern.test(titleLower) ||
+    bulkPattern.test(urlLower)
+  )
+) {
+  score -= 600;
+}
+    
     for (
       const term
       of bulkTerms
