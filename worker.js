@@ -1220,7 +1220,7 @@ async function searchSupplier(
               const productResponse =
                 await fetchWithTimeout(
                   candidate.url,
-                  10000
+                  3000
                 );
 
               const productHtml =
