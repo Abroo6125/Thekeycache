@@ -115,27 +115,30 @@ products.sort((a, b) => {
           "Live supplier results. Nothing has been saved to D1.",
 
         suppliers:
-          supplierResults.map(
-            result => ({
-              supplier:
-                result.supplier,
+  supplierResults.map(
+    result => ({
+      supplier:
+        result.supplier,
 
-              ok:
-                result.ok,
+      ok:
+        result.ok,
 
-              searchStatus:
-                result.searchStatus,
+      searchStatus:
+        result.searchStatus,
 
-              searchMs:
-                result.searchMs,
+      searchMs:
+        result.searchMs,
 
-              productsFound:
-                result.products?.length || 0,
+      productsFound:
+        result.products?.length || 0,
 
-              error:
-                result.error || null
-            })
-          ),
+      queriesUsed:
+        result.queriesUsed || [],
+
+      error:
+        result.error || null
+    })
+  ),
 
         products
       });
