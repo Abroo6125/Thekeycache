@@ -1188,6 +1188,9 @@ async function searchSupplier(
         15
       );
 
+    const detailCandidates =
+  candidates.slice(0, 7);
+
     if (!candidates.length) {
       return {
         supplier:
@@ -1210,7 +1213,7 @@ async function searchSupplier(
     // Fetch details for all top candidates.
     const detailedProducts =
       await Promise.all(
-        candidates.map(
+        detailcandidates.map(
           async candidate => {
 
             try {
