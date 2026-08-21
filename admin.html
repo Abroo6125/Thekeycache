@@ -1,191 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>KeyCache Admin</title>
-  <link rel="stylesheet" href="style.css">
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    KeyCache Admin
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
 </head>
+
 
 <body>
 
+
   <main class="admin-page">
 
+
     <section class="admin-card">
+
 
       <div class="badge">
         KeyCache Admin
       </div>
 
-      <h1>Import a Product</h1>
+
+      <h1>
+        Import a Supplier Listing
+      </h1>
+
 
       <p class="admin-intro">
-        Paste a supplier product link. KeyCache will try to pull the product information automatically.
+        Import a supplier page and either create
+        a new KeyCache product or attach the
+        supplier to an existing product.
       </p>
 
 
-      <!-- IMPORT -->
+
+      <!-- ================================= -->
+      <!-- IMPORT SECTION -->
+      <!-- ================================= -->
+
 
       <div class="import-box">
 
+
         <label>
+
           Supplier Product URL
+
           <input
             id="productUrl"
             type="url"
             placeholder="https://supplier.com/product/..."
           >
+
         </label>
 
+
+
         <label>
+
           Affiliate URL
-          <span class="optional">(optional)</span>
+
+          <span class="optional">
+            (optional)
+          </span>
 
           <input
             id="affiliateUrl"
             type="url"
             placeholder="Paste your affiliate tracking link here"
           >
+
         </label>
 
-        <button id="importButton" type="button">
+
+
+        <label>
+
+          Add Listing To
+
+          <select id="productMode">
+
+            <option value="new">
+              New KeyCache Product
+            </option>
+
+            <option value="existing">
+              Existing KeyCache Product
+            </option>
+
+          </select>
+
+        </label>
+
+
+
+        <label
+          id="existingProductRow"
+          hidden
+        >
+
+          Choose Existing Product
+
+          <select id="existingProductId">
+
+            <option value="">
+              Select a product...
+            </option>
+
+          </select>
+
+        </label>
+
+
+
+        <button
+          id="importButton"
+          type="button"
+        >
           Import Product
         </button>
 
+
         <div id="importMessage"></div>
+
 
       </div>
 
 
-      <!-- REVIEW / EDIT -->
 
-      <form id="productForm" class="review-section" hidden>
+      <!-- ================================= -->
+      <!-- REVIEW SECTION -->
+      <!-- ================================= -->
 
-        <h2 id="reviewHeading">Review Product</h2>
+
+      <form
+        id="productForm"
+        class="review-section"
+        hidden
+      >
+
+
+        <h2 id="reviewHeading">
+          Review Product
+        </h2>
+
 
         <p class="review-note">
-          Check the information below before saving it to KeyCache.
+          Check the information before saving it.
+          Supplier-specific fields can differ.
         </p>
+
+
 
         <div class="form-grid">
 
+
           <label class="full-width">
+
             Product Title
-            <input id="title" required>
+
+            <input
+              id="title"
+              required
+            >
+
           </label>
 
+
+
           <label>
+
             Vehicle
+
             <input id="vehicle">
+
           </label>
 
+
+
           <label>
+
             Years
-            <input id="years" placeholder="2023-2024">
+
+            <input
+              id="years"
+              placeholder="2000-2018"
+            >
+
           </label>
 
+
+
           <label>
+
             FCC ID
+
             <input id="fccId">
+
           </label>
 
+
+
           <label>
+
             OEM / Part Number
+
             <input id="oemPart">
+
           </label>
 
+
+
           <label>
+
             Frequency
-            <input id="frequency" placeholder="315 MHz">
+
+            <input
+              id="frequency"
+              placeholder="315 MHz"
+            >
+
           </label>
 
+
+
           <label>
+
             Chip ID
-            <input id="chipId" placeholder="4D63 80 Bit">
+
+            <input
+              id="chipId"
+              placeholder="4D63 80 Bit"
+            >
+
           </label>
+
+
 
           <label class="full-width">
+
             Button Configuration
+
             <input
-            id="buttonConfiguration"
-             placeholder="5 Button / Remote Start / Hatch"
+              id="buttonConfiguration"
+              placeholder="5 Button / Remote Start / Hatch"
             >
+
           </label>
+
+
+
           <label>
+
             Buttons
-            <input id="buttons" placeholder="5 Button">
+
+            <input
+              id="buttons"
+              placeholder="5 Button"
+            >
+
           </label>
 
-          <label>
-            Condition / Type
-            <input id="conditionType">
+
+
+          <label class="checkbox-row">
+
+            <input
+              type="checkbox"
+              id="remoteStart"
+            >
+
+            Remote Start
+
           </label>
 
+
+
+          <label class="full-width">
+
+            Notes
+
+            <input id="notes">
+
+          </label>
+
+
+
           <label>
+
             Supplier
-            <input id="supplierName" required>
+
+            <input
+              id="supplierName"
+              required
+            >
+
           </label>
 
+
+
           <label>
+
             Supplier Product ID
+
             <input id="supplierProductId">
+
           </label>
 
+
+
           <label>
+
+            Condition / Type
+
+            <input id="conditionType">
+
+          </label>
+
+
+
+          <label>
+
             Price
+
             <input
               id="price"
               type="number"
               step="0.01"
             >
+
           </label>
 
+
+
           <label>
+
             Stock Status
+
             <input
               id="stockStatus"
               placeholder="In stock"
             >
+
           </label>
 
+
+
           <label>
+
             Shipping
+
             <input
               id="shipping"
               placeholder="Check supplier"
             >
+
           </label>
 
-          <label class="checkbox-row">
-            <input
-              type="checkbox"
-              id="remoteStart"
-            >
-            Remote Start
-          </label>
-
-          <label class="full-width">
-            Notes
-            <input id="notes">
-          </label>
 
         </div>
+
 
 
         <div class="source-links">
 
-          <p>
-            <strong>Supplier URL:</strong>
-            <span id="sourceUrlDisplay"></span>
-          </p>
 
           <p>
-            <strong>Affiliate URL:</strong>
-            <span id="affiliateUrlDisplay"></span>
+
+            <strong>
+              Supplier URL:
+            </strong>
+
+            <span id="sourceUrlDisplay"></span>
+
           </p>
+
+
+          <p>
+
+            <strong>
+              Affiliate URL:
+            </strong>
+
+            <span id="affiliateUrlDisplay"></span>
+
+          </p>
+
 
         </div>
+
 
 
         <button
@@ -196,6 +414,8 @@
           Save to KeyCache
         </button>
 
+
+
         <button
           type="button"
           id="cancelEditButton"
@@ -205,18 +425,29 @@
           Cancel Edit
         </button>
 
+
         <div id="saveMessage"></div>
+
 
       </form>
 
 
+
+      <!-- ================================= -->
       <!-- EXISTING PRODUCTS -->
+      <!-- ================================= -->
+
 
       <div class="existing-products">
 
+
         <div class="existing-products-header">
 
-          <h2>Existing Products</h2>
+
+          <h2>
+            Existing Supplier Listings
+          </h2>
+
 
           <button
             type="button"
@@ -226,698 +457,1504 @@
             Refresh
           </button>
 
+
         </div>
+
 
         <div id="productList">
           Loading products...
         </div>
 
+
       </div>
 
+
     </section>
+
 
   </main>
 
 
-<script>
 
-  const importButton =
-    document.getElementById("importButton");
+  <script>
 
-  const productUrl =
-    document.getElementById("productUrl");
 
-  const affiliateUrl =
-    document.getElementById("affiliateUrl");
+    // =====================================================
+    // ELEMENTS
+    // =====================================================
 
-  const importMessage =
-    document.getElementById("importMessage");
 
-  const productForm =
-    document.getElementById("productForm");
-
-  const saveMessage =
-    document.getElementById("saveMessage");
-
-  const productList =
-    document.getElementById("productList");
-
-  const refreshProducts =
-    document.getElementById("refreshProducts");
-
-  const reviewHeading =
-    document.getElementById("reviewHeading");
-
-  const saveButton =
-    document.getElementById("saveButton");
-
-  const cancelEditButton =
-    document.getElementById("cancelEditButton");
-
-
-  // =============================
-  // IMPORT PRODUCT
-  // =============================
-
-  importButton.addEventListener(
-    "click",
-    async function () {
-
-      const url =
-        productUrl.value.trim();
-
-      if (!url) {
-        importMessage.textContent =
-          "Paste a supplier product URL first.";
-        return;
-      }
-
-      importButton.disabled = true;
-      importButton.textContent = "Importing...";
-      importMessage.textContent =
-        "Reading supplier page...";
-
-      try {
-
-        const response =
-          await fetch(
-            "/api/import-product",
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body: JSON.stringify({
-                url: url
-              })
-            }
-          );
-
-        const result =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            result.error ||
-            "Unable to import product."
-          );
-        }
-
-        const data =
-          result.data || {};
-
-        document.getElementById("title").value =
-          data.title || "";
-
-        document.getElementById("supplierName").value =
-          data.supplierName || "";
-
-        document.getElementById("supplierProductId").value =
-          data.supplierProductId || "";
-
-        document.getElementById("conditionType").value =
-          data.conditionType || "";
-
-        document.getElementById("price").value =
-          data.price ?? "";
-
-        document.getElementById("stockStatus").value =
-          data.stockStatus || "";
-
-        document.getElementById("shipping").value =
-          "Check supplier";
-
-        document.getElementById(
-          "sourceUrlDisplay"
-        ).textContent = url;
-
-        document.getElementById(
-          "affiliateUrlDisplay"
-        ).textContent =
-          affiliateUrl.value.trim() ||
-          "None";
-
-        delete productForm.dataset.productId;
-        delete productForm.dataset.listingId;
-
-        reviewHeading.textContent =
-          "Review Product";
-
-        saveButton.textContent =
-          "Save to KeyCache";
-
-        cancelEditButton.hidden = true;
-
-        productForm.hidden = false;
-
-        if (result.blocked) {
-          importMessage.textContent =
-            "Supplier blocked automatic reading. Fill in the missing fields below.";
-        } else {
-          importMessage.textContent =
-            "Import complete. Review the fields below.";
-        }
-
-        productForm.scrollIntoView({
-          behavior: "smooth"
-        });
-
-      } catch (error) {
-
-        console.error(error);
-
-        importMessage.textContent =
-          "Import failed: " +
-          error.message;
-
-      } finally {
-
-        importButton.disabled = false;
-        importButton.textContent =
-          "Import Product";
-
-      }
-    }
-  );
-
-
-  // =============================
-  // SAVE OR UPDATE
-  // =============================
-
-  productForm.addEventListener(
-    "submit",
-    async function (event) {
-
-      event.preventDefault();
-
-      saveMessage.textContent =
-        "Saving...";
-
-      const data = {
-
-        title:
-          document.getElementById("title").value.trim(),
-
-        vehicle:
-          document.getElementById("vehicle").value.trim(),
-
-        years:
-          document.getElementById("years").value.trim(),
-
-        fccId:
-          document.getElementById("fccId").value.trim(),
-
-        oemPart:
-          document.getElementById("oemPart").value.trim(),
-
-        buttons:
-          document.getElementById("buttons").value.trim(),
-
-        frequency:
-          document.getElementById("frequency").value.trim(),
-
-        chipId:
-          document.getElementById("chipId").value.trim(),
-
-        buttonConfiguration:
-          document.getElementById("buttonConfiguration").value.trim(),
-
-        remoteStart:
-          document.getElementById("remoteStart").checked,
-
-        notes:
-          document.getElementById("notes").value.trim(),
-
-        supplierName:
-          document.getElementById("supplierName").value.trim(),
-
-        supplierProductId:
-          document.getElementById("supplierProductId").value.trim(),
-
-        conditionType:
-          document.getElementById("conditionType").value.trim(),
-
-        price:
-          document.getElementById("price").value
-            ? Number(
-                document.getElementById("price").value
-              )
-            : null,
-
-        stockStatus:
-          document.getElementById("stockStatus").value.trim(),
-
-        shipping:
-          document.getElementById("shipping").value.trim(),
-
-        url:
-          productUrl.value.trim(),
-
-        affiliateUrl:
-          affiliateUrl.value.trim()
-      };
-
-
-      const editingProduct =
-        productForm.dataset.productId;
-
-
-      if (editingProduct) {
-
-        data.productId =
-          Number(
-            productForm.dataset.productId
-          );
-
-        data.listingId =
-          Number(
-            productForm.dataset.listingId
-          );
-      }
-
-
-      try {
-
-        const response =
-          await fetch(
-            editingProduct
-              ? "/api/admin/products"
-              : "/api/products",
-            {
-              method:
-                editingProduct
-                  ? "PUT"
-                  : "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify(data)
-            }
-          );
-
-        const result =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            result.error ||
-            result.details ||
-            "Unable to save product."
-          );
-        }
-
-        saveMessage.textContent =
-          editingProduct
-            ? "✓ Product updated!"
-            : "✓ Product saved to KeyCache!";
-
-        delete productForm.dataset.productId;
-        delete productForm.dataset.listingId;
-
-        reviewHeading.textContent =
-          "Review Product";
-
-        saveButton.textContent =
-          "Save to KeyCache";
-
-        cancelEditButton.hidden = true;
-
-        await loadProducts();
-
-      } catch (error) {
-
-        console.error(error);
-
-        saveMessage.textContent =
-          "Save failed: " +
-          error.message;
-      }
-    }
-  );
-
-
-  // =============================
-  // LOAD EXISTING PRODUCTS
-  // =============================
-
-  async function loadProducts() {
-
-    productList.innerHTML =
-      "<p>Loading products...</p>";
-
-    try {
-
-      const response =
-        await fetch(
-          "/api/admin/products"
-        );
-
-      const result =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          "Unable to load products."
-        );
-      }
-
-      const products =
-        Array.isArray(result.products)
-          ? result.products
-          : [];
-
-      if (products.length === 0) {
-
-        productList.innerHTML =
-          "<p>No products yet.</p>";
-
-        return;
-      }
-
-      productList.innerHTML =
-        products.map(product => {
-
-          const title =
-            product.title ||
-            "Untitled Product";
-
-          const supplier =
-            product.supplier_name ||
-            "No supplier";
-
-          const price =
-            typeof product.price === "number"
-              ? "$" +
-                product.price.toFixed(2)
-              : "No price";
-
-          const encodedProduct =
-            encodeURIComponent(
-              JSON.stringify(product)
-            );
-
-          return `
-            <div class="admin-product-card">
-
-              <div class="admin-product-info">
-
-                <strong>
-                  ${escapeHtml(title)}
-                </strong>
-
-                <span>
-                  ${escapeHtml(supplier)}
-                </span>
-
-                <span>
-                  ${price}
-                </span>
-
-              </div>
-
-
-              <div class="admin-product-actions">
-
-                <button
-                  type="button"
-                  class="edit-product"
-                  data-product="${encodedProduct}"
-                >
-                  Edit
-                </button>
-
-                <button
-                  type="button"
-                  class="delete-product"
-                  data-product-id="${product.id}"
-                >
-                  Delete
-                </button>
-
-              </div>
-
-            </div>
-          `;
-        }).join("");
-
-    } catch (error) {
-
-      console.error(
-        "LOAD PRODUCTS ERROR:",
-        error
+    const importButton =
+      document.getElementById(
+        "importButton"
       );
 
-      productList.innerHTML = `
-        <p>
-          Unable to load products:
-          ${escapeHtml(error.message)}
-        </p>
-      `;
-    }
-  }
+
+    const productUrl =
+      document.getElementById(
+        "productUrl"
+      );
 
 
-  // =============================
-  // EDIT / DELETE BUTTONS
-  // =============================
-
-  productList.addEventListener(
-    "click",
-    async function (event) {
-
-      const editButton =
-        event.target.closest(
-          ".edit-product"
-        );
-
-      const deleteButton =
-        event.target.closest(
-          ".delete-product"
-        );
+    const affiliateUrl =
+      document.getElementById(
+        "affiliateUrl"
+      );
 
 
-      // EDIT
+    const productMode =
+      document.getElementById(
+        "productMode"
+      );
 
-      if (editButton) {
 
-        const product =
-          JSON.parse(
-            decodeURIComponent(
-              editButton.dataset.product
-            )
+    const existingProductRow =
+      document.getElementById(
+        "existingProductRow"
+      );
+
+
+    const existingProductId =
+      document.getElementById(
+        "existingProductId"
+      );
+
+
+    const importMessage =
+      document.getElementById(
+        "importMessage"
+      );
+
+
+    const productForm =
+      document.getElementById(
+        "productForm"
+      );
+
+
+    const saveMessage =
+      document.getElementById(
+        "saveMessage"
+      );
+
+
+    const productList =
+      document.getElementById(
+        "productList"
+      );
+
+
+    const refreshProducts =
+      document.getElementById(
+        "refreshProducts"
+      );
+
+
+    const reviewHeading =
+      document.getElementById(
+        "reviewHeading"
+      );
+
+
+    const saveButton =
+      document.getElementById(
+        "saveButton"
+      );
+
+
+    const cancelEditButton =
+      document.getElementById(
+        "cancelEditButton"
+      );
+
+
+
+    // =====================================================
+    // NEW VS EXISTING PRODUCT SELECTOR
+    // =====================================================
+
+
+    productMode.addEventListener(
+      "change",
+      function() {
+
+
+        const usingExisting =
+          productMode.value ===
+          "existing";
+
+
+        existingProductRow.hidden =
+          !usingExisting;
+
+
+        if (
+          !usingExisting
+        ) {
+
+          existingProductId.value =
+            "";
+        }
+
+
+      }
+    );
+
+
+
+    // =====================================================
+    // LOAD MASTER PRODUCTS INTO DROPDOWN
+    // =====================================================
+
+
+    async function loadMasterProducts() {
+
+
+      try {
+
+
+        const response =
+          await fetch(
+            "/api/admin/products"
           );
 
-        document.getElementById("title").value =
-          product.title || "";
 
-        document.getElementById("vehicle").value =
-          product.vehicle || "";
+        const result =
+          await response.json();
 
-        document.getElementById("years").value =
-          product.years || "";
 
-        document.getElementById("fccId").value =
-          product.fcc_id || "";
+        if (!response.ok) {
 
-        document.getElementById("oemPart").value =
-          product.oem_part || "";
+          throw new Error(
+            result.error ||
+            "Unable to load products."
+          );
+        }
 
-        document.getElementById("buttons").value =
-          product.buttons || "";
 
-        document.getElementById("frequency").value =
-          product.frequency || "";
+        const uniqueProducts =
+          new Map();
 
-        document.getElementById("chipId").value =
-          product.chip_id || "";
 
-        document.getElementById("buttonConfiguration").value =
-          product.button_configuration || "";
+        for (
+          const product
+          of result.products || []
+        ) {
 
-        document.getElementById("remoteStart").checked =
-          Boolean(product.remote_start);
 
-        document.getElementById("notes").value =
-          product.notes || "";
+          if (
+            !uniqueProducts.has(
+              product.id
+            )
+          ) {
 
-        document.getElementById("supplierName").value =
-          product.supplier_name || "";
+            uniqueProducts.set(
+              product.id,
+              product
+            );
 
-        document.getElementById("supplierProductId").value =
-          product.supplier_product_id || "";
+          }
 
-        document.getElementById("conditionType").value =
-          product.condition_type || "";
 
-        document.getElementById("price").value =
-          product.price ?? "";
+        }
 
-        document.getElementById("stockStatus").value =
-          product.stock_status || "";
 
-        document.getElementById("shipping").value =
-          product.shipping || "";
+        const products =
+          [
+            ...uniqueProducts.values()
+          ]
+            .sort(
+              (a, b) =>
+                (a.title || "")
+                  .localeCompare(
+                    b.title || ""
+                  )
+            );
 
-        productUrl.value =
-          product.url || "";
 
-        affiliateUrl.value =
-          product.affiliate_url || "";
+        existingProductId.innerHTML = `
 
-        document.getElementById(
-          "sourceUrlDisplay"
-        ).textContent =
-          product.url || "";
+          <option value="">
+            Select a product...
+          </option>
 
-        document.getElementById(
-          "affiliateUrlDisplay"
-        ).textContent =
-          product.affiliate_url ||
-          "None";
+          ${products
+            .map(product => `
 
-        productForm.dataset.productId =
-          product.id;
+              <option
+                value="${product.id}"
+              >
 
-        productForm.dataset.listingId =
-          product.listing_id;
+                ${escapeHtml(
+                  product.title ||
+                  "Untitled Product"
+                )}
 
-        reviewHeading.textContent =
-          "Edit Product";
+                ${
+                  product.oem_part
+                    ? " | " +
+                      escapeHtml(
+                        product.oem_part
+                      )
+                    : ""
+                }
 
-        saveButton.textContent =
-          "Save Changes";
+              </option>
 
-        cancelEditButton.hidden = false;
+            `)
+            .join("")}
+        `;
 
-        saveMessage.textContent = "";
 
-        productForm.hidden = false;
+      } catch (error) {
 
-        productForm.scrollIntoView({
-          behavior: "smooth"
-        });
 
-        return;
+        console.error(
+          "MASTER PRODUCT ERROR:",
+          error
+        );
+
+
       }
 
 
-      // DELETE
+    }
 
-      if (deleteButton) {
 
-        const productId =
-          deleteButton.dataset.productId;
 
-        const confirmed =
-          confirm(
-            "Delete this product from KeyCache?"
-          );
+    // =====================================================
+    // IMPORT PRODUCT
+    // =====================================================
 
-        if (!confirmed) {
+
+    importButton.addEventListener(
+      "click",
+      async function() {
+
+
+        const url =
+          productUrl.value.trim();
+
+
+        if (!url) {
+
+          importMessage.textContent =
+            "Paste a supplier product URL first.";
+
           return;
+
         }
+
+
+        if (
+          productMode.value ===
+            "existing" &&
+          !existingProductId.value
+        ) {
+
+          importMessage.textContent =
+            "Choose the existing KeyCache product first.";
+
+          return;
+
+        }
+
+
+        importButton.disabled =
+          true;
+
+
+        importButton.textContent =
+          "Importing...";
+
+
+        importMessage.textContent =
+          "Reading supplier page...";
+
 
         try {
 
+
           const response =
             await fetch(
-              "/api/admin/products",
+              "/api/import-product",
               {
-                method: "DELETE",
+
+                method:
+                  "POST",
 
                 headers: {
+
                   "Content-Type":
                     "application/json"
+
                 },
 
                 body:
                   JSON.stringify({
-                    productId
+                    url
                   })
+
               }
             );
+
 
           const result =
             await response.json();
 
+
           if (!response.ok) {
+
             throw new Error(
               result.error ||
-              "Delete failed."
+              "Unable to import product."
             );
+
           }
 
-          await loadProducts();
+
+          const data =
+            result.data || {};
+
+
+          document.getElementById(
+            "title"
+          ).value =
+            data.title || "";
+
+
+          document.getElementById(
+            "supplierName"
+          ).value =
+            data.supplierName || "";
+
+
+          document.getElementById(
+            "supplierProductId"
+          ).value =
+            data.supplierProductId || "";
+
+
+          document.getElementById(
+            "conditionType"
+          ).value =
+            data.conditionType || "";
+
+
+          document.getElementById(
+            "price"
+          ).value =
+            data.price ?? "";
+
+
+          document.getElementById(
+            "stockStatus"
+          ).value =
+            data.stockStatus || "";
+
+
+          document.getElementById(
+            "shipping"
+          ).value =
+            "Check supplier";
+
+
+          document.getElementById(
+            "sourceUrlDisplay"
+          ).textContent =
+            url;
+
+
+          document.getElementById(
+            "affiliateUrlDisplay"
+          ).textContent =
+            affiliateUrl.value.trim() ||
+            "None";
+
+
+
+          // -----------------------------------
+          // EXISTING MASTER PRODUCT
+          // -----------------------------------
+
+
+          if (
+            productMode.value ===
+            "existing"
+          ) {
+
+
+            const selectedId =
+              Number(
+                existingProductId.value
+              );
+
+
+            const response2 =
+              await fetch(
+                "/api/admin/products"
+              );
+
+
+            const result2 =
+              await response2.json();
+
+
+            const master =
+              (
+                result2.products || []
+              ).find(
+                product =>
+                  Number(product.id) ===
+                  selectedId
+              );
+
+
+            if (master) {
+
+
+              document.getElementById(
+                "title"
+              ).value =
+                master.title || "";
+
+
+              document.getElementById(
+                "vehicle"
+              ).value =
+                master.vehicle || "";
+
+
+              document.getElementById(
+                "years"
+              ).value =
+                master.years || "";
+
+
+              document.getElementById(
+                "fccId"
+              ).value =
+                master.fcc_id || "";
+
+
+              document.getElementById(
+                "oemPart"
+              ).value =
+                master.oem_part || "";
+
+
+              document.getElementById(
+                "frequency"
+              ).value =
+                master.frequency || "";
+
+
+              document.getElementById(
+                "chipId"
+              ).value =
+                master.chip_id || "";
+
+
+              document.getElementById(
+                "buttonConfiguration"
+              ).value =
+                master.button_configuration ||
+                "";
+
+
+              document.getElementById(
+                "buttons"
+              ).value =
+                master.buttons || "";
+
+
+              document.getElementById(
+                "remoteStart"
+              ).checked =
+                Boolean(
+                  master.remote_start
+                );
+
+
+              document.getElementById(
+                "notes"
+              ).value =
+                master.notes || "";
+
+            }
+
+
+          }
+
+
+          delete productForm.dataset
+            .productId;
+
+
+          delete productForm.dataset
+            .listingId;
+
+
+          reviewHeading.textContent =
+            productMode.value ===
+            "existing"
+              ? "Add Supplier to Existing Product"
+              : "Review New Product";
+
+
+          saveButton.textContent =
+            productMode.value ===
+            "existing"
+              ? "Add Supplier Listing"
+              : "Save New Product";
+
+
+          cancelEditButton.hidden =
+            true;
+
+
+          productForm.hidden =
+            false;
+
+
+
+          if (result.blocked) {
+
+            importMessage.textContent =
+              "Supplier blocked automatic reading. Fill in the missing supplier fields below.";
+
+          } else {
+
+            importMessage.textContent =
+              "Import complete. Review the information below.";
+
+          }
+
+
+
+          productForm.scrollIntoView({
+            behavior:
+              "smooth"
+          });
+
 
         } catch (error) {
 
-          alert(
-            "Delete failed: " +
-            error.message
-          );
+
+          console.error(error);
+
+
+          importMessage.textContent =
+            "Import failed: " +
+            error.message;
+
+
+        } finally {
+
+
+          importButton.disabled =
+            false;
+
+
+          importButton.textContent =
+            "Import Product";
+
+
         }
+
+
       }
+    );
+
+
+
+    // =====================================================
+    // SAVE NEW / ATTACH SUPPLIER / UPDATE
+    // =====================================================
+
+
+    productForm.addEventListener(
+      "submit",
+      async function(event) {
+
+
+        event.preventDefault();
+
+
+        saveMessage.textContent =
+          "Saving...";
+
+
+        const data = {
+
+
+          existingProductId:
+            productMode.value ===
+              "existing"
+              ? Number(
+                  existingProductId.value
+                )
+              : null,
+
+
+          title:
+            document.getElementById(
+              "title"
+            ).value.trim(),
+
+
+          vehicle:
+            document.getElementById(
+              "vehicle"
+            ).value.trim(),
+
+
+          years:
+            document.getElementById(
+              "years"
+            ).value.trim(),
+
+
+          fccId:
+            document.getElementById(
+              "fccId"
+            ).value.trim(),
+
+
+          oemPart:
+            document.getElementById(
+              "oemPart"
+            ).value.trim(),
+
+
+          frequency:
+            document.getElementById(
+              "frequency"
+            ).value.trim(),
+
+
+          chipId:
+            document.getElementById(
+              "chipId"
+            ).value.trim(),
+
+
+          buttonConfiguration:
+            document.getElementById(
+              "buttonConfiguration"
+            ).value.trim(),
+
+
+          buttons:
+            document.getElementById(
+              "buttons"
+            ).value.trim(),
+
+
+          remoteStart:
+            document.getElementById(
+              "remoteStart"
+            ).checked,
+
+
+          notes:
+            document.getElementById(
+              "notes"
+            ).value.trim(),
+
+
+          supplierName:
+            document.getElementById(
+              "supplierName"
+            ).value.trim(),
+
+
+          supplierProductId:
+            document.getElementById(
+              "supplierProductId"
+            ).value.trim(),
+
+
+          conditionType:
+            document.getElementById(
+              "conditionType"
+            ).value.trim(),
+
+
+          price:
+            document.getElementById(
+              "price"
+            ).value
+              ? Number(
+                  document.getElementById(
+                    "price"
+                  ).value
+                )
+              : null,
+
+
+          stockStatus:
+            document.getElementById(
+              "stockStatus"
+            ).value.trim(),
+
+
+          shipping:
+            document.getElementById(
+              "shipping"
+            ).value.trim(),
+
+
+          url:
+            productUrl.value.trim(),
+
+
+          affiliateUrl:
+            affiliateUrl.value.trim()
+
+        };
+
+
+
+        const editingProduct =
+          productForm.dataset
+            .productId;
+
+
+
+        if (editingProduct) {
+
+
+          data.productId =
+            Number(
+              productForm.dataset
+                .productId
+            );
+
+
+          data.listingId =
+            Number(
+              productForm.dataset
+                .listingId
+            );
+
+
+        }
+
+
+
+        try {
+
+
+          const response =
+            await fetch(
+              editingProduct
+                ? "/api/admin/products"
+                : "/api/products",
+              {
+
+                method:
+                  editingProduct
+                    ? "PUT"
+                    : "POST",
+
+                headers: {
+
+                  "Content-Type":
+                    "application/json"
+
+                },
+
+                body:
+                  JSON.stringify(
+                    data
+                  )
+
+              }
+            );
+
+
+          const result =
+            await response.json();
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              result.error ||
+              result.details ||
+              "Unable to save product."
+            );
+
+          }
+
+
+
+          saveMessage.textContent =
+            editingProduct
+              ? "✓ Product updated!"
+              : productMode.value ===
+                "existing"
+                ? "✓ Supplier added to existing product!"
+                : "✓ New product saved!";
+
+
+
+          delete productForm.dataset
+            .productId;
+
+
+          delete productForm.dataset
+            .listingId;
+
+
+
+          await loadProducts();
+
+          await loadMasterProducts();
+
+
+        } catch (error) {
+
+
+          console.error(error);
+
+
+          saveMessage.textContent =
+            "Save failed: " +
+            error.message;
+
+
+        }
+
+
+      }
+    );
+
+
+
+    // =====================================================
+    // LOAD EXISTING LISTINGS
+    // =====================================================
+
+
+    async function loadProducts() {
+
+
+      productList.innerHTML =
+        "<p>Loading products...</p>";
+
+
+      try {
+
+
+        const response =
+          await fetch(
+            "/api/admin/products"
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.error ||
+            "Unable to load products."
+          );
+
+        }
+
+
+        const products =
+          Array.isArray(
+            result.products
+          )
+            ? result.products
+            : [];
+
+
+        if (
+          products.length ===
+          0
+        ) {
+
+          productList.innerHTML =
+            "<p>No products yet.</p>";
+
+          return;
+
+        }
+
+
+
+        productList.innerHTML =
+          products
+            .map(product => {
+
+
+              const title =
+                product.title ||
+                "Untitled Product";
+
+
+              const supplier =
+                product.supplier_name ||
+                "No supplier";
+
+
+              const price =
+                typeof product.price ===
+                "number"
+                  ? "$" +
+                    product.price
+                      .toFixed(2)
+
+                  : "No price";
+
+
+              const encodedProduct =
+                encodeURIComponent(
+                  JSON.stringify(
+                    product
+                  )
+                );
+
+
+              return `
+
+                <div
+                  class="admin-product-card"
+                >
+
+
+                  <div
+                    class="admin-product-info"
+                  >
+
+
+                    <strong>
+
+                      ${escapeHtml(
+                        title
+                      )}
+
+                    </strong>
+
+
+                    <span>
+
+                      Product ID:
+                      ${product.id}
+
+                    </span>
+
+
+                    <span>
+
+                      ${escapeHtml(
+                        supplier
+                      )}
+
+                    </span>
+
+
+                    <span>
+
+                      ${price}
+
+                    </span>
+
+
+                  </div>
+
+
+
+                  <div
+                    class="admin-product-actions"
+                  >
+
+
+                    <button
+                      type="button"
+                      class="edit-product"
+                      data-product="${encodedProduct}"
+                    >
+                      Edit
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="delete-product"
+                      data-product-id="${product.id}"
+                    >
+                      Delete Product
+                    </button>
+
+
+                  </div>
+
+
+                </div>
+
+              `;
+
+
+            })
+            .join("");
+
+
+      } catch (error) {
+
+
+        console.error(
+          "LOAD PRODUCTS ERROR:",
+          error
+        );
+
+
+        productList.innerHTML = `
+
+          <p>
+
+            Unable to load products:
+
+            ${escapeHtml(
+              error.message
+            )}
+
+          </p>
+
+        `;
+
+
+      }
+
+
     }
-  );
 
 
-  // =============================
-  // CANCEL EDIT
-  // =============================
 
-  cancelEditButton.addEventListener(
-    "click",
-    function () {
+    // =====================================================
+    // EDIT / DELETE
+    // =====================================================
 
-      delete productForm.dataset.productId;
-      delete productForm.dataset.listingId;
 
-      productForm.reset();
+    productList.addEventListener(
+      "click",
+      async function(event) {
 
-      productForm.hidden = true;
 
-      reviewHeading.textContent =
-        "Review Product";
+        const editButton =
+          event.target.closest(
+            ".edit-product"
+          );
 
-      saveButton.textContent =
-        "Save to KeyCache";
 
-      cancelEditButton.hidden = true;
+        const deleteButton =
+          event.target.closest(
+            ".delete-product"
+          );
 
-      saveMessage.textContent = "";
+
+
+        // ---------------------------------
+        // EDIT
+        // ---------------------------------
+
+
+        if (editButton) {
+
+
+          const product =
+            JSON.parse(
+              decodeURIComponent(
+                editButton.dataset
+                  .product
+              )
+            );
+
+
+          document.getElementById(
+            "title"
+          ).value =
+            product.title || "";
+
+
+          document.getElementById(
+            "vehicle"
+          ).value =
+            product.vehicle || "";
+
+
+          document.getElementById(
+            "years"
+          ).value =
+            product.years || "";
+
+
+          document.getElementById(
+            "fccId"
+          ).value =
+            product.fcc_id || "";
+
+
+          document.getElementById(
+            "oemPart"
+          ).value =
+            product.oem_part || "";
+
+
+          document.getElementById(
+            "frequency"
+          ).value =
+            product.frequency || "";
+
+
+          document.getElementById(
+            "chipId"
+          ).value =
+            product.chip_id || "";
+
+
+          document.getElementById(
+            "buttonConfiguration"
+          ).value =
+            product.button_configuration ||
+            "";
+
+
+          document.getElementById(
+            "buttons"
+          ).value =
+            product.buttons || "";
+
+
+          document.getElementById(
+            "remoteStart"
+          ).checked =
+            Boolean(
+              product.remote_start
+            );
+
+
+          document.getElementById(
+            "notes"
+          ).value =
+            product.notes || "";
+
+
+          document.getElementById(
+            "supplierName"
+          ).value =
+            product.supplier_name ||
+            "";
+
+
+          document.getElementById(
+            "supplierProductId"
+          ).value =
+            product.supplier_product_id ||
+            "";
+
+
+          document.getElementById(
+            "conditionType"
+          ).value =
+            product.condition_type ||
+            "";
+
+
+          document.getElementById(
+            "price"
+          ).value =
+            product.price ?? "";
+
+
+          document.getElementById(
+            "stockStatus"
+          ).value =
+            product.stock_status ||
+            "";
+
+
+          document.getElementById(
+            "shipping"
+          ).value =
+            product.shipping || "";
+
+
+          productUrl.value =
+            product.url || "";
+
+
+          affiliateUrl.value =
+            product.affiliate_url ||
+            "";
+
+
+          document.getElementById(
+            "sourceUrlDisplay"
+          ).textContent =
+            product.url || "";
+
+
+          document.getElementById(
+            "affiliateUrlDisplay"
+          ).textContent =
+            product.affiliate_url ||
+            "None";
+
+
+          productForm.dataset
+            .productId =
+            product.id;
+
+
+          productForm.dataset
+            .listingId =
+            product.listing_id;
+
+
+          reviewHeading.textContent =
+            "Edit Supplier Listing";
+
+
+          saveButton.textContent =
+            "Save Changes";
+
+
+          cancelEditButton.hidden =
+            false;
+
+
+          saveMessage.textContent =
+            "";
+
+
+          productForm.hidden =
+            false;
+
+
+          productForm.scrollIntoView({
+            behavior:
+              "smooth"
+          });
+
+
+          return;
+
+        }
+
+
+
+        // ---------------------------------
+        // DELETE PRODUCT
+        // ---------------------------------
+
+
+        if (deleteButton) {
+
+
+          const productId =
+            deleteButton.dataset
+              .productId;
+
+
+          const confirmed =
+            confirm(
+              "Delete this entire KeyCache product and all of its supplier listings?"
+            );
+
+
+          if (!confirmed) {
+            return;
+          }
+
+
+          try {
+
+
+            const response =
+              await fetch(
+                "/api/admin/products",
+                {
+
+                  method:
+                    "DELETE",
+
+                  headers: {
+
+                    "Content-Type":
+                      "application/json"
+
+                  },
+
+                  body:
+                    JSON.stringify({
+                      productId
+                    })
+
+                }
+              );
+
+
+            const result =
+              await response.json();
+
+
+            if (!response.ok) {
+
+              throw new Error(
+                result.error ||
+                "Delete failed."
+              );
+
+            }
+
+
+            await loadProducts();
+
+            await loadMasterProducts();
+
+
+          } catch (error) {
+
+
+            alert(
+              "Delete failed: " +
+              error.message
+            );
+
+
+          }
+
+
+        }
+
+
+      }
+    );
+
+
+
+    // =====================================================
+    // CANCEL EDIT
+    // =====================================================
+
+
+    cancelEditButton.addEventListener(
+      "click",
+      function() {
+
+
+        delete productForm.dataset
+          .productId;
+
+
+        delete productForm.dataset
+          .listingId;
+
+
+        productForm.reset();
+
+
+        productForm.hidden =
+          true;
+
+
+        reviewHeading.textContent =
+          "Review Product";
+
+
+        saveButton.textContent =
+          "Save to KeyCache";
+
+
+        cancelEditButton.hidden =
+          true;
+
+
+        saveMessage.textContent =
+          "";
+
+
+      }
+    );
+
+
+
+    // =====================================================
+    // REFRESH
+    // =====================================================
+
+
+    refreshProducts.addEventListener(
+      "click",
+      async function() {
+
+        await loadProducts();
+
+        await loadMasterProducts();
+
+      }
+    );
+
+
+
+    // =====================================================
+    // BASIC HTML ESCAPING
+    // =====================================================
+
+
+    function escapeHtml(value) {
+
+
+      return String(
+        value ?? ""
+      )
+        .replace(
+          /&/g,
+          "&amp;"
+        )
+        .replace(
+          /</g,
+          "&lt;"
+        )
+        .replace(
+          />/g,
+          "&gt;"
+        )
+        .replace(
+          /"/g,
+          "&quot;"
+        )
+        .replace(
+          /'/g,
+          "&#039;"
+        );
+
+
     }
-  );
 
 
-  refreshProducts.addEventListener(
-    "click",
-    loadProducts
-  );
+
+    // =====================================================
+    // INITIAL LOAD
+    // =====================================================
 
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+    loadProducts();
+
+    loadMasterProducts();
 
 
-  // Load products immediately
-  loadProducts();
+  </script>
 
-</script>
 
 </body>
+
 </html>
