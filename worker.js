@@ -1,631 +1,121 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    
+
+
     // =====================================================
-// ROYAL CONNECTION ISOLATION TEST
-// =====================================================
-
-if (url.pathname === "/api/test-royal") {
-  const query = (url.searchParams.get("q") || "H92").trim();
-
-  const target =
-    "https://royalkeysupply.com/search?q=" +
-    encodeURIComponent(query);
-
-  const started = Date.now();
-
-  try {
-    const response = await fetch(target, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 KeyCache Prototype"
-      },
-      redirect: "follow"
-    });
-
-    return json({
-      success: true,
-      supplier: "Royal Key Supply",
-      status: response.status,
-      ok: response.ok,
-      fetchMs: Date.now() - started,
-      contentType:
-        response.headers.get("content-type"),
-      finalUrl: response.url
-    });
-
-  } catch (error) {
-    return json({
-      success: false,
-      supplier: "Royal Key Supply",
-      fetchMs: Date.now() - started,
-      error: error.message
-    });
-  }
-}
-
-// =====================================================
-// ROYAL HTML READ TEST
-// =====================================================
-
-if (url.pathname === "/api/test-royal-html") {
-  const query = (url.searchParams.get("q") || "H92").trim();
-
-  const target =
-    "https://royalkeysupply.com/search?q=" +
-    encodeURIComponent(query);
-
-  const started = Date.now();
-
-  try {
-    const response = await fetch(target, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 KeyCache Prototype"
-      },
-      redirect: "follow"
-    });
-
-    const html = await response.text();
-
-    return json({
-      success: true,
-      supplier: "Royal Key Supply",
-      status: response.status,
-      fetchAndReadMs: Date.now() - started,
-      htmlLength: html.length,
-      containsH92:
-        html.toLowerCase().includes("h92"),
-      containsProducts:
-        html.includes("/products/")
-    });
-
-  } catch (error) {
-    return json({
-      success: false,
-      supplier: "Royal Key Supply",
-      fetchAndReadMs: Date.now() - started,
-      error: error.message
-    });
-  }
-}
-// =====================================================
-// ROYAL FIRST PRODUCT EXTRACTION TEST
-// =====================================================
-
-if (url.pathname === "/api/test-royal-product") {
-  const query = (url.searchParams.get("q") || "H92").trim();
-
-  const target =
-    "https://royalkeysupply.com/search?q=" +
-    encodeURIComponent(query);
-
-  try {
-    const response = await fetch(target, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 KeyCache Prototype"
-      },
-      redirect: "follow"
-    });
-
-    const html = await response.text();
-
-    const productLinkRegex =
-      /<a[^>]+href=["']([^"']*\/products\/[^"'?#]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
-
-    let match;
-
-    while ((match = productLinkRegex.exec(html)) !== null) {
-      let productUrl = match[1];
-
-      if (productUrl.startsWith("//")) {
-        productUrl = "https:" + productUrl;
-      } else if (productUrl.startsWith("/")) {
-        productUrl =
-          "https://royalkeysupply.com" +
-          productUrl;
-      }
-
-      productUrl =
-        productUrl.split("?")[0];
-
-      const title =
-        match[2]
-          .replace(/<[^>]*>/g, " ")
-          .replace(/&amp;/g, "&")
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'")
-          .replace(/&nbsp;/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-
-      if (
-        title
-          .toLowerCase()
-          .includes(
-            query.toLowerCase()
-          )
-      ) {
-        return json({
-          success: true,
-          supplier: "Royal Key Supply",
-          query,
-          title,
-          productUrl
-        });
-      }
-    }
-
-    return json({
-      success: false,
-      supplier: "Royal Key Supply",
-      query,
-      message:
-        "No matching Royal product link found."
-    });
-
-  } catch (error) {
-    return json({
-      success: false,
-      supplier: "Royal Key Supply",
-      error: error.message
-    });
-  }
-}
+    // LIVE SUPPLIER SEARCH PROTOTYPE
     // =====================================================
-// ROYAL PRODUCT DETAIL EXTRACTION TEST
-// =====================================================
 
-if (url.pathname === "/api/test-royal-details") {
-  const productUrl =
-    "https://royalkeysupply.com/products/ford-aftermarket-2000-2020-edge-expedition-explorer-flex-focus-f-150-transponder-key-h92-pt-pn-5913441";
-
-  try {
-    const response = await fetch(productUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 KeyCache Prototype"
-      },
-      redirect: "follow"
-    });
-
-    const html = await response.text();
-
-    const title =
-      getMeta(
-        html,
-        "property",
-        "og:title"
-      ) ||
-      getTitle(html) ||
-      "";
-
-    const price =
-      getMeta(
-        html,
-        "property",
-        "product:price:amount"
-      ) ||
-      extractJsonLdValue(
-        html,
-        "price"
-      ) ||
-      "";
-
-    const sku =
-      extractJsonLdValue(
-        html,
-        "sku"
-      ) ||
-      "";
-
-    let stock =
-      extractJsonLdValue(
-        html,
-        "availability"
-      ) ||
-      "";
-
-    if (stock.includes("InStock")) {
-      stock = "In stock";
-    } else if (
-      stock.includes("OutOfStock")
+    if (
+      url.pathname === "/api/live-search" &&
+      request.method === "GET"
     ) {
-      stock = "Out of stock";
-    }
+      const query =
+        (url.searchParams.get("q") || "").trim();
 
-    return json({
-      success: true,
-      supplier: "Royal Key Supply",
-      title: cleanText(title),
-      price:
-        price && !Number.isNaN(Number(price))
-          ? Number(price)
-          : null,
-      sku: cleanText(sku),
-      stock:
-        stock || "Check supplier",
-      url: productUrl
-    });
-
-  } catch (error) {
-    return json({
-      success: false,
-      supplier: "Royal Key Supply",
-      error: error.message
-    });
-  }
-}
-    // =====================================================
-// LIVE SUPPLIER SEARCH - TIMING DIAGNOSTIC
-// =====================================================
-
-if (url.pathname === "/api/live-search" && request.method === "GET") {
-  const query = (url.searchParams.get("q") || "").trim();
-
-  if (!query) {
-    return json({
-      error: "Search query is required."
-    }, 400);
-  }
-
-  const suppliers = [
-    {
-      supplier: "Royal Key Supply",
-      baseUrl: "https://royalkeysupply.com",
-      searchUrl:
-        "https://royalkeysupply.com/search?q=" +
-        encodeURIComponent(query)
-    },
-    {
-      supplier: "CLK Supplies",
-      baseUrl: "https://clksupplies.com",
-      searchUrl:
-        "https://www.clksupplies.com/search?q=" +
-        encodeURIComponent(query)
-    }
-  ];
-
-  const results = [];
+      if (!query) {
+        return json(
+          {
+            error: "Search query is required."
+          },
+          400
+        );
+      }
 
 
-  for (const supplier of suppliers) {
+      const supplierConfigs = [
+        {
+          name: "Royal Key Supply",
+          baseUrl: "https://royalkeysupply.com",
+          searchUrl:
+            "https://royalkeysupply.com/search?q=" +
+            encodeURIComponent(query)
+        },
 
-    const supplierResult = {
-      supplier: supplier.supplier,
-      searchUrl: supplier.searchUrl
-    };
+        {
+          name: "CLK Supplies",
+          baseUrl: "https://www.clksupplies.com",
+          searchUrl:
+            "https://www.clksupplies.com/search?q=" +
+            encodeURIComponent(query)
+        }
+      ];
 
 
-    try {
-
-      // ---------------------------------
-      // STEP 1: FETCH SEARCH PAGE
-      // ---------------------------------
-
-      const searchStart = Date.now();
-
-      const searchResponse =
-        await fetchWithTimeout(
-          supplier.searchUrl,
-          8000
+      const supplierResults =
+        await Promise.all(
+          supplierConfigs.map(
+            supplier =>
+              searchSupplier(
+                supplier,
+                query
+              )
+          )
         );
 
-      supplierResult.searchFetchMs =
-        Date.now() - searchStart;
 
-      supplierResult.searchStatus =
-        searchResponse.status;
-
-      supplierResult.searchOk =
-        searchResponse.ok;
-
-
-      const html =
-        await searchResponse.text();
-
-      supplierResult.searchResponseLength =
-        html.length;
-
-
-      // ---------------------------------
-      // STEP 2: FIND FIRST MATCHING PRODUCT
-      // ---------------------------------
-
-      const productLinkRegex =
-        /<a[^>]+href=["']([^"']*\/products\/[^"'?#]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
-
-
-      let match;
-
-      let firstProduct = null;
-
-
-      while (
-        (match =
-          productLinkRegex.exec(html)) !== null
-      ) {
-
-        let productUrl =
-          match[1];
-
-
-        if (
-          productUrl.startsWith("//")
-        ) {
-
-          productUrl =
-            "https:" + productUrl;
-
-        } else if (
-          productUrl.startsWith("/")
-        ) {
-
-          productUrl =
-            supplier.baseUrl +
-            productUrl;
-
-        } else if (
-          !productUrl.startsWith("http")
-        ) {
-
-          productUrl =
-            supplier.baseUrl +
-            "/" +
-            productUrl;
-        }
-
-
-        productUrl =
-          productUrl.split("?")[0];
-
-
-        const rawTitle =
-          match[2]
-            .replace(
-              /<script[\s\S]*?<\/script>/gi,
-              " "
-            )
-            .replace(
-              /<style[\s\S]*?<\/style>/gi,
-              " "
-            )
-            .replace(
-              /<[^>]*>/g,
-              " "
-            )
-            .replace(
-              /&amp;/g,
-              "&"
-            )
-            .replace(
-              /&quot;/g,
-              '"'
-            )
-            .replace(
-              /&#39;/g,
-              "'"
-            )
-            .replace(
-              /&nbsp;/g,
-              " "
-            )
-            .replace(
-              /\s+/g,
-              " "
-            )
-            .trim();
-
-
-        if (
-          !rawTitle
-            .toLowerCase()
-            .includes(
-              query.toLowerCase()
-            )
-        ) {
-          continue;
-        }
-
-
-        firstProduct = {
-          title:
-            rawTitle.slice(
-              0,
-              250
-            ),
-
-          url:
-            productUrl
-        };
-
-
-        break;
-      }
-
-
-      supplierResult.firstProduct =
-        firstProduct;
-
-
-      if (!firstProduct) {
-
-        supplierResult.productFetch =
-          "Skipped - no matching product found";
-
-        results.push(
-          supplierResult
+      const products =
+        supplierResults.flatMap(
+          supplier =>
+            supplier.products || []
         );
 
-        continue;
-      }
+
+      // Put real numeric prices first.
+      products.sort((a, b) => {
+        const priceA =
+          typeof a.price === "number"
+            ? a.price
+            : Infinity;
+
+        const priceB =
+          typeof b.price === "number"
+            ? b.price
+            : Infinity;
+
+        return priceA - priceB;
+      });
 
 
+      return json({
+        success: true,
+        query,
 
-      // ---------------------------------
-      // STEP 3: FETCH FIRST PRODUCT PAGE
-      // ---------------------------------
+        prototype:
+          "KEYCACHE_LIVE_SEARCH_V1",
 
-      const productStart =
-        Date.now();
+        message:
+          "Live supplier results. Nothing has been saved to D1.",
 
+        suppliers:
+          supplierResults.map(
+            result => ({
+              supplier:
+                result.supplier,
 
-      try {
+              ok:
+                result.ok,
 
-        const productResponse =
-          await fetchWithTimeout(
-            firstProduct.url,
-            8000
-          );
+              searchStatus:
+                result.searchStatus,
 
+              searchMs:
+                result.searchMs,
 
-        supplierResult.productFetchMs =
-          Date.now() -
-          productStart;
+              productsFound:
+                result.products?.length || 0,
 
+              error:
+                result.error || null
+            })
+          ),
 
-        supplierResult.productStatus =
-          productResponse.status;
-
-
-        supplierResult.productOk =
-          productResponse.ok;
-
-
-        const productHtml =
-          await productResponse.text();
-
-
-        supplierResult.productResponseLength =
-          productHtml.length;
-
-
-        const title =
-          getMeta(
-            productHtml,
-            "property",
-            "og:title"
-          ) ||
-          getTitle(
-            productHtml
-          ) ||
-          firstProduct.title;
-
-
-        const price =
-          getMeta(
-            productHtml,
-            "property",
-            "product:price:amount"
-          ) ||
-          extractJsonLdValue(
-            productHtml,
-            "price"
-          ) ||
-          "";
-
-
-        const sku =
-          extractJsonLdValue(
-            productHtml,
-            "sku"
-          ) ||
-          "";
-
-
-        let stock =
-          extractJsonLdValue(
-            productHtml,
-            "availability"
-          ) ||
-          "";
-
-
-        if (
-          stock.includes(
-            "InStock"
-          )
-        ) {
-
-          stock =
-            "In stock";
-
-        } else if (
-          stock.includes(
-            "OutOfStock"
-          )
-        ) {
-
-          stock =
-            "Out of stock";
-        }
-
-
-        supplierResult.extracted = {
-
-          title:
-            cleanText(title),
-
-          price:
-            price &&
-            !Number.isNaN(
-              Number(price)
-            )
-              ? Number(price)
-              : null,
-
-          sku:
-            cleanText(sku),
-
-          stock:
-            stock ||
-            "Check supplier",
-
-          url:
-            firstProduct.url
-        };
-
-
-      } catch (error) {
-
-        supplierResult.productFetchMs =
-          Date.now() -
-          productStart;
-
-        supplierResult.productError =
-          error.message;
-      }
-
-
-    } catch (error) {
-
-      supplierResult.searchError =
-        error.message;
+        products
+      });
     }
 
 
-    results.push(
-      supplierResult
-    );
-  }
-
-
-  return json({
-    success: true,
-
-    query,
-
-    test:
-      "LIVE_SEARCH_TIMING_DIAGNOSTIC_V1",
-
-    message:
-      "Diagnostic only. Nothing has been saved.",
-
-    results
-  });
-}
 
     // =====================================================
     // IMPORT PRODUCT FROM SUPPLIER URL
@@ -636,111 +126,120 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
       request.method === "POST"
     ) {
       try {
-        const body = await request.json();
-        const productUrl = body.url?.trim();
+        const body =
+          await request.json();
+
+        const productUrl =
+          body.url?.trim();
+
 
         if (!productUrl) {
           return json(
-            { error: "Product URL is required." },
+            {
+              error:
+                "Product URL is required."
+            },
             400
           );
         }
+
 
         let parsedUrl;
 
         try {
-          parsedUrl = new URL(productUrl);
+          parsedUrl =
+            new URL(productUrl);
         } catch {
           return json(
-            { error: "That doesn't look like a valid URL." },
+            {
+              error:
+                "That doesn't look like a valid URL."
+            },
             400
           );
         }
 
-        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+
+        if (
+          ![
+            "http:",
+            "https:"
+          ].includes(
+            parsedUrl.protocol
+          )
+        ) {
           return json(
-            { error: "Only normal web URLs are allowed." },
+            {
+              error:
+                "Only normal web URLs are allowed."
+            },
             400
           );
         }
 
-        const response = await fetch(productUrl, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 KeyCache Product Importer"
-          }
-        });
+
+        const response =
+          await fetchWithTimeout(
+            productUrl,
+            10000
+          );
+
 
         if (!response.ok) {
           return json({
             success: false,
             blocked: true,
+
             message:
               "This supplier would not allow KeyCache to read the page automatically.",
+
             data: {
               supplierName:
-                supplierFromHostname(parsedUrl.hostname),
-              url: productUrl
+                supplierFromHostname(
+                  parsedUrl.hostname
+                ),
+
+              url:
+                productUrl
             }
           });
         }
 
-        const html = await response.text();
 
-        const title =
-          getMeta(html, "property", "og:title") ||
-          getMeta(html, "name", "twitter:title") ||
-          getTitle(html) ||
-          "";
+        const html =
+          await response.text();
 
-        const price =
-          getMeta(
+
+        const details =
+          extractProductDetails(
             html,
-            "property",
-            "product:price:amount"
-          ) ||
-          extractJsonLdValue(html, "price") ||
-          "";
+            productUrl
+          );
 
-        let stock =
-          extractJsonLdValue(html, "availability") ||
-          "";
-
-        if (stock.includes("InStock")) {
-          stock = "In stock";
-        } else if (stock.includes("OutOfStock")) {
-          stock = "Out of stock";
-        }
-
-        const sku =
-          extractJsonLdValue(html, "sku") ||
-          "";
-
-        const condition =
-          extractJsonLdValue(html, "itemCondition") ||
-          "";
 
         return json({
           success: true,
+
           data: {
-            title: cleanText(title),
+            title:
+              details.title,
 
             supplierName:
-              supplierFromHostname(parsedUrl.hostname),
+              supplierFromHostname(
+                parsedUrl.hostname
+              ),
 
             supplierProductId:
-              cleanText(sku),
+              details.sku,
 
             conditionType:
-              cleanCondition(condition),
+              details.type,
 
             price:
-              price
-                ? Number(price)
-                : "",
+              details.price,
 
             stockStatus:
-              stock,
+              details.stock,
 
             url:
               productUrl
@@ -750,8 +249,11 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
       } catch (error) {
         return json(
           {
-            error: "Import failed.",
-            details: error.message
+            error:
+              "Import failed.",
+
+            details:
+              error.message
           },
           500
         );
@@ -769,7 +271,9 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
       request.method === "POST"
     ) {
       try {
-        const data = await request.json();
+        const data =
+          await request.json();
+
 
         if (
           !data.supplierName ||
@@ -785,15 +289,18 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
         }
 
 
-        // -------------------------------------------------
-        // USE EXISTING PRODUCT OR CREATE NEW MASTER PRODUCT
-        // -------------------------------------------------
-
         const existingProductId =
-          Number(data.existingProductId) || null;
+          Number(
+            data.existingProductId
+          ) || null;
+
 
         let product;
 
+
+        // -------------------------------------------------
+        // ATTACH TO EXISTING MASTER PRODUCT
+        // -------------------------------------------------
 
         if (existingProductId) {
 
@@ -803,8 +310,11 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
               FROM products
               WHERE id = ?
             `)
-              .bind(existingProductId)
+              .bind(
+                existingProductId
+              )
               .first();
+
 
           if (!product) {
             return json(
@@ -818,6 +328,10 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
 
         } else {
 
+          // -------------------------------------------------
+          // CREATE NEW MASTER PRODUCT
+          // -------------------------------------------------
+
           if (!data.title) {
             return json(
               {
@@ -827,6 +341,7 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
               400
             );
           }
+
 
           const slug =
             createSlug(
@@ -867,6 +382,7 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
 
             ON CONFLICT(slug)
             DO UPDATE SET
+
               title =
                 excluded.title,
 
@@ -947,7 +463,7 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
 
 
         // -------------------------------------------------
-        // CHECK FOR DUPLICATE SUPPLIER LISTING
+        // CHECK IF THIS EXACT SUPPLIER LISTING EXISTS
         // -------------------------------------------------
 
         const existingListing =
@@ -969,6 +485,7 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
               data.url
             )
             .first();
+
 
 
         if (existingListing) {
@@ -1038,6 +555,7 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
 
               data.stockStatus || "",
               data.shipping || "",
+
               data.url,
               data.affiliateUrl || "",
 
@@ -1064,8 +582,11 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
       } catch (error) {
         return json(
           {
-            error: "Unable to save product.",
-            details: error.message
+            error:
+              "Unable to save product.",
+
+            details:
+              error.message
           },
           500
         );
@@ -1078,17 +599,24 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
     // HEALTH CHECK
     // =====================================================
 
-    if (url.pathname === "/api/health") {
+    if (
+      url.pathname === "/api/health"
+    ) {
       return json({
         success: true,
-        message: "KeyCache API is alive."
+
+        version:
+          "KEYCACHE_LIVE_SEARCH_V1",
+
+        message:
+          "KeyCache API is alive."
       });
     }
 
 
 
     // =====================================================
-    // PUBLIC SEARCH
+    // D1 PUBLIC SEARCH
     // =====================================================
 
     if (
@@ -1102,18 +630,22 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
             ""
           ).trim();
 
+
         if (!query) {
           return json({
             products: []
           });
         }
 
+
         const search =
           `%${query}%`;
+
 
         const results =
           await env.DB.prepare(`
             SELECT
+
               p.id,
               p.slug,
               p.title,
@@ -1147,17 +679,27 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
               ON s.product_id = p.id
 
             WHERE
+
               p.title LIKE ?
+
               OR p.vehicle LIKE ?
+
               OR p.years LIKE ?
+
               OR p.frequency LIKE ?
+
               OR p.chip_id LIKE ?
+
               OR p.button_configuration LIKE ?
+
               OR p.fcc_id LIKE ?
+
               OR p.oem_part LIKE ?
+
               OR p.notes LIKE ?
 
             ORDER BY
+
               p.id DESC,
 
               CASE
@@ -1185,16 +727,30 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
         const products = {};
 
 
-        for (const row of results.results) {
+        for (
+          const row
+          of results.results
+        ) {
 
-          if (!products[row.id]) {
-
+          if (
+            !products[row.id]
+          ) {
             products[row.id] = {
-              id: row.id,
-              slug: row.slug,
-              title: row.title,
-              vehicle: row.vehicle,
-              years: row.years,
+
+              id:
+                row.id,
+
+              slug:
+                row.slug,
+
+              title:
+                row.title,
+
+              vehicle:
+                row.vehicle,
+
+              years:
+                row.years,
 
               frequency:
                 row.frequency,
@@ -1215,7 +771,9 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
                 row.buttons,
 
               remoteStart:
-                Boolean(row.remote_start),
+                Boolean(
+                  row.remote_start
+                ),
 
               notes:
                 row.notes,
@@ -1225,9 +783,13 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
           }
 
 
-          if (row.supplier_name) {
+          if (
+            row.supplier_name
+          ) {
+            products[
+              row.id
+            ].suppliers.push({
 
-            products[row.id].suppliers.push({
               listingId:
                 row.listing_id,
 
@@ -1265,15 +827,19 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
 
         return json({
           products:
-            Object.values(products)
+            Object.values(
+              products
+            )
         });
 
       } catch (error) {
-
         return json(
           {
-            error: "Search failed.",
-            details: error.message
+            error:
+              "Search failed.",
+
+            details:
+              error.message
           },
           500
         );
@@ -1287,11 +853,11 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
     // =====================================================
 
     if (
-      url.pathname === "/api/admin/products" &&
+      url.pathname ===
+        "/api/admin/products" &&
       request.method === "GET"
     ) {
       try {
-
         const results =
           await env.DB.prepare(`
             SELECT
@@ -1337,12 +903,12 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
 
         return json({
           success: true,
+
           products:
             results.results
         });
 
       } catch (error) {
-
         return json(
           {
             error:
@@ -1363,12 +929,14 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
     // =====================================================
 
     if (
-      url.pathname === "/api/admin/products" &&
+      url.pathname ===
+        "/api/admin/products" &&
       request.method === "PUT"
     ) {
       try {
         const data =
           await request.json();
+
 
         if (
           !data.productId ||
@@ -1476,7 +1044,6 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
         });
 
       } catch (error) {
-
         return json(
           {
             error:
@@ -1497,15 +1064,19 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
     // =====================================================
 
     if (
-      url.pathname === "/api/admin/products" &&
+      url.pathname ===
+        "/api/admin/products" &&
       request.method === "DELETE"
     ) {
       try {
         const data =
           await request.json();
 
+
         const productId =
-          Number(data.productId);
+          Number(
+            data.productId
+          );
 
 
         if (!productId) {
@@ -1542,7 +1113,6 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
         });
 
       } catch (error) {
-
         return json(
           {
             error:
@@ -1559,20 +1129,643 @@ if (url.pathname === "/api/live-search" && request.method === "GET") {
 
 
     // =====================================================
-    // STATIC WEBSITE
+    // STATIC WEBSITE FILES
     // =====================================================
 
-    return env.ASSETS.fetch(request);
+    return env.ASSETS.fetch(
+      request
+    );
   }
 };
 
 
 
 // =========================================================
-// HELPERS
+// LIVE SUPPLIER SEARCH
 // =========================================================
 
-function json(data, status = 200) {
+async function searchSupplier(
+  supplier,
+  query
+) {
+  const started =
+    Date.now();
+
+  try {
+    const response =
+      await fetchWithTimeout(
+        supplier.searchUrl,
+        10000
+      );
+
+
+    const html =
+      await response.text();
+
+
+    const candidate =
+      findBestProductCandidate(
+        html,
+        supplier.baseUrl,
+        query
+      );
+
+
+    if (!candidate) {
+      return {
+        supplier:
+          supplier.name,
+
+        ok:
+          response.ok,
+
+        searchStatus:
+          response.status,
+
+        searchMs:
+          Date.now() -
+          started,
+
+        products: []
+      };
+    }
+
+
+    const detailStarted =
+      Date.now();
+
+
+    try {
+      const productResponse =
+        await fetchWithTimeout(
+          candidate.url,
+          10000
+        );
+
+
+      const productHtml =
+        await productResponse.text();
+
+
+      const details =
+        extractProductDetails(
+          productHtml,
+          candidate.url
+        );
+
+
+      return {
+        supplier:
+          supplier.name,
+
+        ok: true,
+
+        searchStatus:
+          response.status,
+
+        searchMs:
+          Date.now() -
+          started,
+
+        detailMs:
+          Date.now() -
+          detailStarted,
+
+        products: [
+          {
+            supplier:
+              supplier.name,
+
+            title:
+              details.title ||
+              candidate.title,
+
+            price:
+              details.price,
+
+            sku:
+              details.sku,
+
+            stock:
+              details.stock,
+
+            type:
+              details.type,
+
+            url:
+              candidate.url
+          }
+        ]
+      };
+
+    } catch (error) {
+      return {
+        supplier:
+          supplier.name,
+
+        ok: false,
+
+        searchStatus:
+          response.status,
+
+        searchMs:
+          Date.now() -
+          started,
+
+        error:
+          "Product detail fetch failed: " +
+          error.message,
+
+        products: [
+          {
+            supplier:
+              supplier.name,
+
+            title:
+              candidate.title,
+
+            price: null,
+
+            sku: "",
+
+            stock:
+              "Check supplier",
+
+            type:
+              guessProductType(
+                candidate.title
+              ),
+
+            url:
+              candidate.url
+          }
+        ]
+      };
+    }
+
+  } catch (error) {
+    return {
+      supplier:
+        supplier.name,
+
+      ok: false,
+
+      searchMs:
+        Date.now() -
+        started,
+
+      error:
+        error.message,
+
+      products: []
+    };
+  }
+}
+
+
+
+// =========================================================
+// FIND BEST SEARCH RESULT
+// =========================================================
+
+function findBestProductCandidate(
+  html,
+  baseUrl,
+  query
+) {
+  const productLinkRegex =
+    /<a[^>]+href=["']([^"']*\/products\/[^"'?#]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+
+
+  const candidates = [];
+  const seenUrls =
+    new Set();
+
+  let match;
+
+
+  while (
+    (
+      match =
+        productLinkRegex.exec(
+          html
+        )
+    ) !== null
+  ) {
+    let productUrl =
+      match[1];
+
+
+    if (
+      productUrl.startsWith(
+        "//"
+      )
+    ) {
+      productUrl =
+        "https:" +
+        productUrl;
+
+    } else if (
+      productUrl.startsWith(
+        "/"
+      )
+    ) {
+      productUrl =
+        baseUrl +
+        productUrl;
+
+    } else if (
+      !productUrl.startsWith(
+        "http"
+      )
+    ) {
+      productUrl =
+        baseUrl +
+        "/" +
+        productUrl;
+    }
+
+
+    productUrl =
+      productUrl.split("?")[0];
+
+
+    if (
+      seenUrls.has(
+        productUrl
+      )
+    ) {
+      continue;
+    }
+
+
+    let title =
+      stripHtml(
+        match[2]
+      );
+
+
+    title =
+      cleanSearchTitle(
+        title
+      );
+
+
+    if (!title) {
+      continue;
+    }
+
+
+    seenUrls.add(
+      productUrl
+    );
+
+
+    const score =
+      scoreCandidate(
+        title,
+        productUrl,
+        query
+      );
+
+
+    candidates.push({
+      title,
+      url:
+        productUrl,
+      score
+    });
+  }
+
+
+  candidates.sort(
+    (a, b) =>
+      b.score -
+      a.score
+  );
+
+
+  return (
+    candidates[0] ||
+    null
+  );
+}
+
+
+
+// =========================================================
+// BASIC NON-AI SEARCH RANKING
+// =========================================================
+
+function scoreCandidate(
+  title,
+  productUrl,
+  query
+) {
+  const titleLower =
+    String(title)
+      .toLowerCase();
+
+  const urlLower =
+    String(productUrl)
+      .toLowerCase();
+
+  const queryLower =
+    String(query)
+      .toLowerCase()
+      .trim();
+
+
+  let score = 0;
+
+
+  if (
+    titleLower ===
+    queryLower
+  ) {
+    score += 500;
+  }
+
+
+  if (
+    titleLower.includes(
+      queryLower
+    )
+  ) {
+    score += 200;
+  }
+
+
+  if (
+    urlLower.includes(
+      queryLower
+    )
+  ) {
+    score += 100;
+  }
+
+
+  const words =
+    queryLower
+      .split(/\s+/)
+      .filter(Boolean);
+
+
+  for (
+    const word
+    of words
+  ) {
+    if (
+      titleLower.includes(
+        word
+      )
+    ) {
+      score += 30;
+    }
+
+
+    if (
+      urlLower.includes(
+        word
+      )
+    ) {
+      score += 10;
+    }
+  }
+
+
+  return score;
+}
+
+
+
+// =========================================================
+// PRODUCT DETAIL EXTRACTION
+// =========================================================
+
+function extractProductDetails(
+  html,
+  productUrl
+) {
+  const title =
+    getMeta(
+      html,
+      "property",
+      "og:title"
+    ) ||
+    getMeta(
+      html,
+      "name",
+      "twitter:title"
+    ) ||
+    getTitle(html) ||
+    "";
+
+
+  let price =
+    getMeta(
+      html,
+      "property",
+      "product:price:amount"
+    ) ||
+    extractJsonLdValue(
+      html,
+      "price"
+    ) ||
+    "";
+
+
+  if (
+    typeof price ===
+      "string"
+  ) {
+    price =
+      price
+        .replace(
+          /[^0-9.]/g,
+          ""
+        )
+        .trim();
+  }
+
+
+  const numericPrice =
+    price &&
+    !Number.isNaN(
+      Number(price)
+    )
+      ? Number(price)
+      : null;
+
+
+  const sku =
+    extractJsonLdValue(
+      html,
+      "sku"
+    ) ||
+    extractJsonLdValue(
+      html,
+      "mpn"
+    ) ||
+    "";
+
+
+  let stock =
+    extractJsonLdValue(
+      html,
+      "availability"
+    ) ||
+    "";
+
+
+  if (
+    stock.includes(
+      "InStock"
+    )
+  ) {
+    stock =
+      "In stock";
+
+  } else if (
+    stock.includes(
+      "OutOfStock"
+    )
+  ) {
+    stock =
+      "Out of stock";
+  }
+
+
+  if (!stock) {
+
+    const lower =
+      html.toLowerCase();
+
+
+    if (
+      lower.includes(
+        "in stock"
+      )
+    ) {
+      stock =
+        "In stock";
+
+    } else if (
+      lower.includes(
+        "out of stock"
+      )
+    ) {
+      stock =
+        "Out of stock";
+
+    } else {
+      stock =
+        "Check supplier";
+    }
+  }
+
+
+  const condition =
+    extractJsonLdValue(
+      html,
+      "itemCondition"
+    ) ||
+    "";
+
+
+  const cleanedTitle =
+    cleanText(
+      title
+    );
+
+
+  const type =
+    condition
+      ? cleanCondition(
+          condition
+        )
+      : guessProductType(
+          cleanedTitle
+        );
+
+
+  return {
+    title:
+      cleanedTitle,
+
+    price:
+      numericPrice,
+
+    sku:
+      cleanText(
+        sku
+      ),
+
+    stock,
+
+    type,
+
+    url:
+      productUrl
+  };
+}
+
+
+
+// =========================================================
+// FETCH WITH TIMEOUT
+// =========================================================
+
+async function fetchWithTimeout(
+  url,
+  timeoutMs = 10000
+) {
+  const controller =
+    new AbortController();
+
+
+  const timer =
+    setTimeout(
+      () =>
+        controller.abort(),
+      timeoutMs
+    );
+
+
+  try {
+    return await fetch(
+      url,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 KeyCache Prototype"
+        },
+
+        redirect:
+          "follow",
+
+        signal:
+          controller.signal
+      }
+    );
+
+  } finally {
+    clearTimeout(
+      timer
+    );
+  }
+}
+
+
+
+// =========================================================
+// GENERAL HELPERS
+// =========================================================
+
+function json(
+  data,
+  status = 200
+) {
   return new Response(
     JSON.stringify(
       data,
@@ -1584,7 +1777,10 @@ function json(data, status = 200) {
 
       headers: {
         "Content-Type":
-          "application/json"
+          "application/json",
+
+        "Cache-Control":
+          "no-store"
       }
     }
   );
@@ -1600,7 +1796,7 @@ function currentDate() {
 
 function createSlug(text) {
   return (
-    text
+    String(text)
       .toLowerCase()
       .trim()
       .replace(
@@ -1617,10 +1813,15 @@ function createSlug(text) {
 }
 
 
-function supplierFromHostname(hostname) {
+function supplierFromHostname(
+  hostname
+) {
   const host =
     hostname
-      .replace(/^www\./, "")
+      .replace(
+        /^www\./,
+        ""
+      )
       .toLowerCase();
 
 
@@ -1662,6 +1863,114 @@ function supplierFromHostname(hostname) {
 }
 
 
+function stripHtml(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .replace(
+      /<script[\s\S]*?<\/script>/gi,
+      " "
+    )
+    .replace(
+      /<style[\s\S]*?<\/style>/gi,
+      " "
+    )
+    .replace(
+      /<[^>]*>/g,
+      " "
+    )
+    .replace(
+      /&amp;/g,
+      "&"
+    )
+    .replace(
+      /&quot;/g,
+      '"'
+    )
+    .replace(
+      /&#39;/g,
+      "'"
+    )
+    .replace(
+      /&nbsp;/g,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
+function cleanSearchTitle(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .replace(
+      /^"+\s*class="[^"]*"\s*>?/gi,
+      ""
+    )
+    .replace(
+      /"+\s*class="[^"]*"\s*>?/gi,
+      ""
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
+function guessProductType(
+  title
+) {
+  const text =
+    String(
+      title || ""
+    )
+      .toLowerCase();
+
+
+  if (
+    text.includes(
+      "aftermarket"
+    )
+  ) {
+    return "Aftermarket";
+  }
+
+
+  if (
+    text.includes(
+      "refurb"
+    )
+  ) {
+    return "Refurbished OEM";
+  }
+
+
+  if (
+    text.includes(
+      "oem"
+    ) ||
+    text.includes(
+      "strattec"
+    )
+  ) {
+    return "OEM";
+  }
+
+
+  return "Unknown";
+}
+
+
 function getMeta(
   html,
   attribute,
@@ -1681,9 +1990,15 @@ function getMeta(
   ];
 
 
-  for (const pattern of patterns) {
+  for (
+    const pattern
+    of patterns
+  ) {
     const match =
-      html.match(pattern);
+      html.match(
+        pattern
+      );
+
 
     if (match) {
       return match[1];
@@ -1695,11 +2010,14 @@ function getMeta(
 }
 
 
-function getTitle(html) {
+function getTitle(
+  html
+) {
   const match =
     html.match(
       /<title[^>]*>([\s\S]*?)<\/title>/i
     );
+
 
   return match
     ? match[1]
@@ -1718,14 +2036,16 @@ function extractJsonLdValue(
   ];
 
 
-  for (const script of scripts) {
-
+  for (
+    const script
+    of scripts
+  ) {
     try {
-
       const parsed =
         JSON.parse(
           script[1].trim()
         );
+
 
       const result =
         findKey(
@@ -1738,7 +2058,9 @@ function extractJsonLdValue(
         result !== undefined &&
         result !== null
       ) {
-        return String(result);
+        return String(
+          result
+        );
       }
 
     } catch {
@@ -1770,20 +2092,22 @@ function findKey(
         targetKey
       )
   ) {
-    return value[targetKey];
+    return value[
+      targetKey
+    ];
   }
 
 
   for (
     const child
-    of Object.values(value)
+    of Object.values(
+      value
+    )
   ) {
-
     if (
       typeof child ===
       "object"
     ) {
-
       const result =
         findKey(
           child,
@@ -1804,7 +2128,9 @@ function findKey(
 }
 
 
-function cleanCondition(value) {
+function cleanCondition(
+  value
+) {
   if (!value) {
     return "";
   }
@@ -1826,90 +2152,49 @@ function cleanCondition(value) {
 }
 
 
-function cleanText(value) {
+function cleanText(
+  value
+) {
   if (!value) {
     return "";
   }
 
 
   return String(value)
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
+    .replace(
+      /&amp;/g,
+      "&"
+    )
+    .replace(
+      /&quot;/g,
+      '"'
+    )
+    .replace(
+      /&#39;/g,
+      "'"
+    )
+    .replace(
+      /&lt;/g,
+      "<"
+    )
+    .replace(
+      /&gt;/g,
+      ">"
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
     .trim();
 }
 
 
-function escapeRegex(value) {
-  return value.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&"
-  );
-}
-
-function guessProductType(title) {
-  const text = String(title || "").toLowerCase();
-
-  if (text.includes("aftermarket")) {
-    return "Aftermarket";
-  }
-
-  if (
-    text.includes("oem") ||
-    text.includes("strattec")
-  ) {
-    return "OEM";
-  }
-
-  if (text.includes("refurb")) {
-    return "Refurbished";
-  }
-
-  return "Unknown";
-}
-
-async function fetchWithTimeout(
-  url,
-  timeoutMs = 8000
+function escapeRegex(
+  value
 ) {
-
-  const controller =
-    new AbortController();
-
-
-  const timer =
-    setTimeout(
-      () =>
-        controller.abort(),
-      timeoutMs
+  return String(value)
+    .replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&"
     );
-
-
-  try {
-
-    return await fetch(
-      url,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 KeyCache Prototype"
-        },
-
-        redirect:
-          "follow",
-
-        signal:
-          controller.signal
-      }
-    );
-
-  } finally {
-
-    clearTimeout(
-      timer
-    );
-  }
 }
