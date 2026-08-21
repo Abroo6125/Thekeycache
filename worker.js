@@ -62,20 +62,40 @@ export default {
         );
 
 
-      // Put real numeric prices first.
-      products.sort((a, b) => {
-        const priceA =
-          typeof a.price === "number"
-            ? a.price
-            : Infinity;
+    // Put the strongest search matches first.
+// Use price only to break ties.
 
-        const priceB =
-          typeof b.price === "number"
-            ? b.price
-            : Infinity;
+products.sort((a, b) => {
 
-        return priceA - priceB;
-      });
+  const scoreA =
+    typeof a.matchScore === "number"
+      ? a.matchScore
+      : 0;
+
+  const scoreB =
+    typeof b.matchScore === "number"
+      ? b.matchScore
+      : 0;
+
+
+  if (scoreB !== scoreA) {
+    return scoreB - scoreA;
+  }
+
+
+  const priceA =
+    typeof a.price === "number"
+      ? a.price
+      : Infinity;
+
+  const priceB =
+    typeof b.price === "number"
+      ? b.price
+      : Infinity;
+
+
+  return priceA - priceB;
+});
 
 
       return json({
@@ -1598,114 +1618,6 @@ function scoreCandidate(
   return score;
 }
 
-
-
-  // =====================================
-  // LOCKSMITH PRODUCT BOOSTS
-  // =====================================
-
-  // Exact H92-PT family is preferable
-  // when someone searches H92.
-
-  if (
-    queryLower.includes("h92") &&
-    titleLower.includes("h92-pt")
-  ) {
-    score += 120;
-  }
-
-
-  // Favor common identifying information
-  // for the H92 family.
-
-  if (
-    queryLower.includes("h92") &&
-    (
-      titleLower.includes("5913441") ||
-      urlLower.includes("5913441")
-    )
-  ) {
-    score += 150;
-  }
-
-
-  if (
-    queryLower.includes("h92") &&
-    (
-      titleLower.includes("164-r8040") ||
-      urlLower.includes("164-r8040")
-    )
-  ) {
-    score += 150;
-  }
-
-
-  if (
-    queryLower.includes("h92") &&
-    titleLower.includes("strattec")
-  ) {
-    score += 75;
-  }
-
-
-
-  // =====================================
-  // BULK / BUNDLE PENALTIES
-  // =====================================
-
-  const userAskedForBulk =
-    /\b(pack|bundle|bulk|x\d+|\d+\s*pack)\b/i
-      .test(queryLower);
-
-
-  if (!userAskedForBulk) {
-
-const bulkTerms = [
-  "pack of 10",
-  "pack-of-10",
-  "10 pack",
-  "10-pack",
-  "pk10",
-  "x10",
-  "bundle of 10",
-  "bundle-of-10",
-  "bundle",
-  "bulk"
-];
-
-// Catch quantity wording even when suppliers
-// use spaces, hyphens, underscores, or URL formatting.
-const bulkPattern =
-  /(?:pack|bundle)[\s_-]*(?:of[\s_-]*)?\d+|\d+[\s_-]*(?:pack|bundle)|x\d+|pk\d+/i;
-
-if (
-  !userAskedForBulk &&
-  (
-    bulkPattern.test(titleLower) ||
-    bulkPattern.test(urlLower)
-  )
-) {
-  score -= 600;
-}
-    
-    for (
-      const term
-      of bulkTerms
-    ) {
-
-      if (
-        titleLower.includes(term) ||
-        urlLower.includes(term)
-      ) {
-        score -= 400;
-      }
-    }
-  }
-
-
-
-  return score;
-}
 
 
 // =========================================================
