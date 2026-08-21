@@ -118,7 +118,7 @@ export default {
                 url: productUrl
               });
 
-              if (candidates.length >= 3) {
+              if (candidates.length >= 1) {
                 break;
               }
             }
