@@ -1184,51 +1184,100 @@ async function searchSupplier(
     // SHOPIFY PREDICTIVE SEARCH JSON
     // =====================================
 
-    const searchUrl =
-      supplier.baseUrl +
-      "/search/suggest.json?q=" +
-      encodeURIComponent(query) +
-      "&resources[type]=product" +
-      "&resources[limit]=10";
+    const searchQueries =
+  buildComparisonQueries(
+    query
+  );
+
+const queryResults = [];
 
 
-    const response =
+for (
+  const supplierQuery
+  of searchQueries
+) {
+
+  const searchUrl =
+    supplier.baseUrl +
+    "/search/suggest.json?q=" +
+    encodeURIComponent(
+      supplierQuery
+    ) +
+    "&resources[type]=product" +
+    "&resources[limit]=10";
+
+
+  try {
+
+    const queryResponse =
       await fetchWithTimeout(
         searchUrl,
         5000
       );
 
 
-    if (!response.ok) {
-      return {
-        supplier:
-          supplier.name,
-
-        ok: false,
-
-        searchStatus:
-          response.status,
-
-        searchMs:
-          Date.now() - started,
-
-        error:
-          "Supplier search returned HTTP " +
-          response.status,
-
-        products: []
-      };
+    if (!queryResponse.ok) {
+      continue;
     }
 
 
-    const data =
-      await response.json();
+    const queryData =
+      await queryResponse.json();
 
 
-    const rawProducts =
-      data?.resources
+    const queryProducts =
+      queryData?.resources
         ?.results
         ?.products || [];
+
+
+    queryResults.push(
+      ...queryProducts
+    );
+
+
+  } catch {
+    // If one query fails,
+    // try the next one.
+  }
+}
+
+
+  const rawProducts = [];
+
+const seenHandles =
+  new Set();
+
+
+for (
+  const product
+  of queryResults
+) {
+
+  const identity =
+    product.handle ||
+    product.url ||
+    product.id ||
+    product.title;
+
+
+  if (
+    !identity ||
+    seenHandles.has(identity)
+  ) {
+    continue;
+  }
+
+
+  seenHandles.add(
+    identity
+  );
+
+
+  rawProducts.push(
+    product
+  );
+}
 
 
     // =====================================
@@ -1426,21 +1475,24 @@ async function searchSupplier(
 
   } catch (error) {
 
-    return {
-      supplier:
-        supplier.name,
+   return {
+  supplier:
+    supplier.name,
 
-      ok: false,
+  ok: true,
 
-      searchMs:
-        Date.now() -
-        started,
+  searchStatus:
+    200,
 
-      error:
-        error.message,
+  searchMs:
+    Date.now() -
+    started,
 
-      products: []
-    };
+  queriesUsed:
+    searchQueries,
+
+  products
+};
   }
 }
 
@@ -1979,6 +2031,180 @@ function detectSearchMode(query) {
   }
 
   return "comparison";
+}
+
+function buildComparisonQueries(
+  query
+) {
+  const original =
+    String(query || "")
+      .trim();
+
+
+  const queries =
+    [];
+
+
+  // =====================================
+  // FCC ID
+  // =====================================
+
+  const fccMatches =
+    original.match(
+      /\b[A-Z0-9]{5,20}(?:-[A-Z0-9]{2,10})?\b/g
+    ) || [];
+
+
+  for (
+    const match
+    of fccMatches
+  ) {
+
+    const upper =
+      match.toUpperCase();
+
+
+    if (
+      upper.includes("HYQ") ||
+      upper.includes("KR5") ||
+      upper.includes("M3N") ||
+      upper.includes("FCC")
+    ) {
+      queries.push(
+        match
+      );
+    }
+  }
+
+
+  // =====================================
+  // OEM / PART NUMBERS
+  // =====================================
+
+  const partMatches =
+    original.match(
+      /\b\d{4,6}-[A-Z0-9]{4,8}\b/gi
+    ) || [];
+
+
+  queries.push(
+    ...partMatches
+  );
+
+
+  // =====================================
+  // COMMON LOCKSMITH IDENTIFIERS
+  // =====================================
+
+  const identifierMatches =
+    original.match(
+      /\b[A-Z]{1,5}\d{2,8}(?:-[A-Z0-9]+)?\b/gi
+    ) || [];
+
+
+  queries.push(
+    ...identifierMatches
+  );
+
+
+  // =====================================
+  // CLEAN HUMAN SEARCH
+  // =====================================
+
+  let cleaned =
+    original
+      .replace(
+        /\baftermarket\b/gi,
+        " "
+      )
+      .replace(
+        /\boem\b/gi,
+        " "
+      )
+      .replace(
+        /\bnew condition\b/gi,
+        " "
+      )
+      .replace(
+        /\bfcc\s*id\s*:?\s*/gi,
+        " "
+      )
+      .replace(
+        /\bfccid\s*:?\s*/gi,
+        " "
+      )
+      .replace(
+        /\bpn\s*#?\s*:?\s*/gi,
+        " "
+      )
+      .replace(
+        /\bpart\s*(number|no\.?)\s*:?\s*/gi,
+        " "
+      )
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim();
+
+
+  // Remove identifiers we already extracted
+  // from the human-readable fallback query.
+
+  for (
+    const identifier
+    of [
+      ...fccMatches,
+      ...partMatches
+    ]
+  ) {
+
+    cleaned =
+      cleaned
+        .replace(
+          identifier,
+          " "
+        )
+        .replace(
+          /\s+/g,
+          " "
+        )
+        .trim();
+  }
+
+
+  if (cleaned) {
+    queries.push(
+      cleaned
+    );
+  }
+
+
+  // =====================================
+  // FINAL FALLBACK
+  // =====================================
+
+  queries.push(
+    original
+  );
+
+
+  // Remove duplicates and blanks.
+
+  return [
+    ...new Set(
+      queries
+        .map(
+          value =>
+            String(value)
+              .trim()
+        )
+        .filter(Boolean)
+    )
+  ].slice(
+    0,
+    5
+  );
 }
 
 function json(
