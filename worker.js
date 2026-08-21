@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
 
     // =====================================================
-    // DIAGNOSTIC LIVE SUPPLIER SEARCH
+    // LIVE SUPPLIER SEARCH - PRODUCT EXTRACTION TEST
     // =====================================================
 
     if (url.pathname === "/api/live-search" && request.method === "GET") {
@@ -18,12 +18,14 @@ export default {
       const supplierTests = [
         {
           supplier: "Royal Key Supply",
+          baseUrl: "https://royalkeysupply.com",
           searchUrl:
             "https://royalkeysupply.com/search?q=" +
             encodeURIComponent(query)
         },
         {
           supplier: "CLK Supplies",
+          baseUrl: "https://clksupplies.com",
           searchUrl:
             "https://www.clksupplies.com/search?q=" +
             encodeURIComponent(query)
@@ -41,35 +43,85 @@ export default {
               redirect: "follow"
             });
 
-            const contentType =
-              response.headers.get("content-type") || "";
+            const html = await response.text();
 
-            const text = await response.text();
+            // Find product links inside the returned HTML.
+            const productLinkRegex =
+              /<a[^>]+href=["']([^"']*\/products\/[^"'?#]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+
+            const foundProducts = [];
+            const seenUrls = new Set();
+
+            let match;
+
+            while (
+              (match = productLinkRegex.exec(html)) !== null &&
+              foundProducts.length < 20
+            ) {
+              let productUrl = match[1];
+
+              if (productUrl.startsWith("//")) {
+                productUrl = "https:" + productUrl;
+              } else if (productUrl.startsWith("/")) {
+                productUrl = supplier.baseUrl + productUrl;
+              } else if (!productUrl.startsWith("http")) {
+                productUrl =
+                  supplier.baseUrl + "/" + productUrl;
+              }
+
+              // Remove duplicate product URLs.
+              productUrl = productUrl.split("?")[0];
+
+              if (seenUrls.has(productUrl)) {
+                continue;
+              }
+
+              const rawTitle = match[2]
+                .replace(/<[^>]*>/g, " ")
+                .replace(/&amp;/g, "&")
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&nbsp;/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+
+              // Ignore links that contain no readable text.
+              if (!rawTitle) {
+                continue;
+              }
+
+              seenUrls.add(productUrl);
+
+              foundProducts.push({
+                title: rawTitle.slice(0, 250),
+                url: productUrl,
+                containsQuery: rawTitle
+                  .toLowerCase()
+                  .includes(query.toLowerCase())
+              });
+            }
+
+            // Put obvious query matches first.
+            foundProducts.sort((a, b) => {
+              if (a.containsQuery && !b.containsQuery) return -1;
+              if (!a.containsQuery && b.containsQuery) return 1;
+              return 0;
+            });
 
             return {
               supplier: supplier.supplier,
-              requestedUrl: supplier.searchUrl,
-              finalUrl: response.url,
               status: response.status,
               ok: response.ok,
-              contentType,
-              responseLength: text.length,
-              containsQuery: text
-                .toLowerCase()
-                .includes(query.toLowerCase()),
-              containsH92: text
-                .toLowerCase()
-                .includes("h92"),
-              preview: text
-                .replace(/\s+/g, " ")
-                .slice(0, 500)
+              productsFound: foundProducts.length,
+              products: foundProducts.slice(0, 10)
             };
           } catch (error) {
             return {
               supplier: supplier.supplier,
-              requestedUrl: supplier.searchUrl,
               ok: false,
-              error: error.message
+              error: error.message,
+              productsFound: 0,
+              products: []
             };
           }
         })
@@ -79,7 +131,7 @@ export default {
         success: true,
         query,
         message:
-          "Diagnostic only. No supplier data has been saved.",
+          "Product extraction prototype. Nothing has been saved to KeyCache.",
         results
       });
     }
