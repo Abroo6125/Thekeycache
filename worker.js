@@ -14,8 +14,16 @@ export default {
       const query =
         (url.searchParams.get("q") || "").trim();
 
-      const searchMode =
-  detectSearchMode(query);
+      const requestedMode =
+  (
+    url.searchParams.get("mode") ||
+    ""
+  ).toLowerCase();
+
+const searchMode =
+  requestedMode === "comparison"
+    ? "comparison"
+    : detectSearchMode(query);
 
       if (!query) {
         return json(
