@@ -816,24 +816,15 @@
 
 
 
-                      <a
-
-                        class="supplier-button"
-
-                        href="${escapeAttribute(
-                          product.url ||
-                          "#"
-                        )}"
-
-                        target="_blank"
-
-                        rel="noopener noreferrer"
-
-                      >
-
-                        View Product
-
-                      </a>
+                     <button
+  class="supplier-button"
+  type="button"
+  onclick="compareSelectedProduct(
+    '${escapeJs(product.title || "")}'
+  )"
+>
+  Compare This Product
+</button>
 
 
                     </div>
@@ -1810,6 +1801,150 @@
     // HTML SAFETY HELPERS
     // =====================================================
 
+    async function compareSelectedProduct(
+  productTitle
+) {
+
+  const query =
+    String(
+      productTitle || ""
+    ).trim();
+
+
+  if (!query) {
+    return;
+  }
+
+
+  searchInput.value =
+    query;
+
+
+  searchButton.disabled =
+    true;
+
+
+  searchButton.textContent =
+    "Comparing...";
+
+
+  resultsSection.innerHTML = `
+
+    <div class="no-results">
+
+      <h2>
+        Comparing suppliers...
+      </h2>
+
+      <p>
+        KeyCache is looking for
+        equivalent listings.
+      </p>
+
+    </div>
+
+  `;
+
+
+  try {
+
+    const response =
+      await fetch(
+
+        "/api/live-search?q=" +
+        encodeURIComponent(
+          query
+        ) +
+        "&mode=comparison"
+
+      );
+
+
+    const result =
+      await response.json();
+
+
+    if (
+      !response.ok ||
+      !Array.isArray(
+        result.products
+      )
+    ) {
+
+      throw new Error(
+        result.error ||
+        "Comparison failed."
+      );
+    }
+
+
+    displayComparisonResults(
+      result.products,
+      query,
+      result.suppliers || []
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "COMPARISON ERROR:",
+      error
+    );
+
+
+    resultsSection.innerHTML = `
+
+      <div class="no-results">
+
+        <h2>
+          Comparison unavailable
+        </h2>
+
+        <p>
+          KeyCache couldn't compare
+          this product right now.
+        </p>
+
+      </div>
+
+    `;
+
+  } finally {
+
+    searchButton.disabled =
+      false;
+
+
+    searchButton.textContent =
+      "Search";
+
+  }
+}
+
+    function escapeJs(
+  value
+) {
+  return String(
+    value ?? ""
+  )
+    .replace(
+      /\\/g,
+      "\\\\"
+    )
+    .replace(
+      /'/g,
+      "\\'"
+    )
+    .replace(
+      /\r/g,
+      "\\r"
+    )
+    .replace(
+      /\n/g,
+      "\\n"
+    );
+}
 
     function escapeHtml(
       value
