@@ -175,6 +175,90 @@ if (url.pathname === "/api/test-royal-product") {
   }
 }
     // =====================================================
+// ROYAL PRODUCT DETAIL EXTRACTION TEST
+// =====================================================
+
+if (url.pathname === "/api/test-royal-details") {
+  const productUrl =
+    "https://royalkeysupply.com/products/ford-aftermarket-2000-2020-edge-expedition-explorer-flex-focus-f-150-transponder-key-h92-pt-pn-5913441";
+
+  try {
+    const response = await fetch(productUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 KeyCache Prototype"
+      },
+      redirect: "follow"
+    });
+
+    const html = await response.text();
+
+    const title =
+      getMeta(
+        html,
+        "property",
+        "og:title"
+      ) ||
+      getTitle(html) ||
+      "";
+
+    const price =
+      getMeta(
+        html,
+        "property",
+        "product:price:amount"
+      ) ||
+      extractJsonLdValue(
+        html,
+        "price"
+      ) ||
+      "";
+
+    const sku =
+      extractJsonLdValue(
+        html,
+        "sku"
+      ) ||
+      "";
+
+    let stock =
+      extractJsonLdValue(
+        html,
+        "availability"
+      ) ||
+      "";
+
+    if (stock.includes("InStock")) {
+      stock = "In stock";
+    } else if (
+      stock.includes("OutOfStock")
+    ) {
+      stock = "Out of stock";
+    }
+
+    return json({
+      success: true,
+      supplier: "Royal Key Supply",
+      title: cleanText(title),
+      price:
+        price && !Number.isNaN(Number(price))
+          ? Number(price)
+          : null,
+      sku: cleanText(sku),
+      stock:
+        stock || "Check supplier",
+      url: productUrl
+    });
+
+  } catch (error) {
+    return json({
+      success: false,
+      supplier: "Royal Key Supply",
+      error: error.message
+    });
+  }
+}
+    // =====================================================
 // LIVE SUPPLIER SEARCH - TIMING DIAGNOSTIC
 // =====================================================
 
