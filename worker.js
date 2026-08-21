@@ -1168,17 +1168,29 @@ async function searchSupplier(
   supplier,
   query
 ) {
-  const started = Date.now();
+  const started =
+    Date.now();
 
   try {
+
+    // =====================================
+    // FETCH SUPPLIER SEARCH PAGE ONLY
+    // =====================================
+
     const response =
       await fetchWithTimeout(
         supplier.searchUrl,
         10000
       );
 
+
     const html =
       await response.text();
+
+
+    // =====================================
+    // FIND + RANK CANDIDATES
+    // =====================================
 
     const candidates =
       findProductCandidates(
@@ -1188,137 +1200,51 @@ async function searchSupplier(
         15
       );
 
-    const detailCandidates =
-  candidates.slice(0, 3);
 
-    if (!candidates.length) {
-      return {
-        supplier:
-          supplier.name,
+    // =====================================
+    // RETURN TOP 5
+    //
+    // IMPORTANT:
+    // We are NOT opening individual
+    // product pages during broad search.
+    // =====================================
 
-        ok:
-          response.ok,
+    const products =
+      candidates
+        .slice(0, 5)
+        .map(
+          candidate => ({
+            supplier:
+              supplier.name,
 
-        searchStatus:
-          response.status,
+            title:
+              candidate.title,
 
-        searchMs:
-          Date.now() - started,
+            price:
+              null,
 
-        products: []
-      };
-    }
+            sku:
+              "",
 
+            stock:
+              "View supplier",
 
-    // Fetch details for all top candidates.
-    const detailResults =
-  await Promise.allSettled(
-    detailCandidates.map(
-      async candidate => {
+            type:
+              guessProductType(
+                candidate.title
+              ),
 
-        const productResponse =
-          await fetchWithTimeout(
-            candidate.url,
-            3000
-          );
+            url:
+              candidate.url,
 
-        const productHtml =
-          await productResponse.text();
+            matchScore:
+              candidate.score,
 
-        const details =
-          extractProductDetails(
-            productHtml,
-            candidate.url
-          );
+            searchStage:
+              "candidate"
+          })
+        );
 
-        const finalTitle =
-          details.title ||
-          candidate.title;
-
-        const finalScore =
-          scoreCandidate(
-            finalTitle,
-            candidate.url,
-            query
-          );
-
-        return {
-          supplier:
-            supplier.name,
-
-          title:
-            finalTitle,
-
-          price:
-            details.price,
-
-          sku:
-            details.sku,
-
-          stock:
-            details.stock,
-
-          type:
-            details.type,
-
-          url:
-            candidate.url,
-
-          matchScore:
-            finalScore
-        };
-      }
-    )
-  );
-
-
-const detailedProducts =
-  detailResults.map(
-    (result, index) => {
-
-      if (
-        result.status ===
-        "fulfilled"
-      ) {
-        return result.value;
-      }
-
-      const candidate =
-        detailCandidates[index];
-
-      return {
-        supplier:
-          supplier.name,
-
-        title:
-          candidate.title,
-
-        price:
-          null,
-
-        sku:
-          "",
-
-        stock:
-          "Check supplier",
-
-        type:
-          guessProductType(
-            candidate.title
-          ),
-
-        url:
-          candidate.url,
-
-        matchScore:
-          candidate.score,
-
-        error:
-          result.reason?.message ||
-          "Product detail fetch failed."
-      };
-    }
-  );
 
     return {
       supplier:
@@ -1331,16 +1257,10 @@ const detailedProducts =
         response.status,
 
       searchMs:
-        Date.now() - started,
+        Date.now() -
+        started,
 
-      products:
-  detailedProducts
-    .sort(
-      (a, b) =>
-        (b.matchScore || 0) -
-        (a.matchScore || 0)
-    )
-    .slice(0, 5)
+      products
     };
 
 
@@ -1350,10 +1270,12 @@ const detailedProducts =
       supplier:
         supplier.name,
 
-      ok: false,
+      ok:
+        false,
 
       searchMs:
-        Date.now() - started,
+        Date.now() -
+        started,
 
       error:
         error.message,
