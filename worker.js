@@ -230,6 +230,128 @@ export default {
       });
     }
 
+    // -----------------------------
+// SEARCH PRODUCTS
+// -----------------------------
+if (url.pathname === "/api/search" && request.method === "GET") {
+  try {
+    const query = (url.searchParams.get("q") || "").trim();
+
+    if (!query) {
+      return json({ products: [] });
+    }
+
+    const search = `%${query}%`;
+
+    const results = await env.DB.prepare(`
+      SELECT
+        p.id,
+        p.slug,
+        p.title,
+        p.vehicle,
+        p.years,
+        p.fcc_id,
+        p.oem_part,
+        p.buttons,
+        p.remote_start,
+        p.notes,
+
+        s.supplier_name,
+        s.supplier_product_id,
+        s.condition_type,
+        s.price,
+        s.stock_status,
+        s.shipping,
+        s.url,
+        s.affiliate_url,
+        s.last_checked
+
+      FROM products p
+
+      LEFT JOIN supplier_listings s
+        ON s.product_id = p.id
+
+      WHERE
+        p.title LIKE ?
+        OR p.vehicle LIKE ?
+        OR p.years LIKE ?
+        OR p.fcc_id LIKE ?
+        OR p.oem_part LIKE ?
+        OR p.notes LIKE ?
+
+      ORDER BY
+        p.id DESC,
+        s.price ASC
+    `)
+      .bind(
+        search,
+        search,
+        search,
+        search,
+        search,
+        search
+      )
+      .all();
+
+
+    const products = {};
+
+    for (const row of results.results) {
+
+      if (!products[row.id]) {
+
+        products[row.id] = {
+          id: row.id,
+          title: row.title,
+          vehicle: row.vehicle,
+          years: row.years,
+          fccId: row.fcc_id,
+          oemPart: row.oem_part,
+          buttons: row.buttons,
+          remoteStart: Boolean(row.remote_start),
+          notes: row.notes,
+          suppliers: []
+        };
+
+      }
+
+
+      if (row.supplier_name) {
+
+        products[row.id].suppliers.push({
+          name: row.supplier_name,
+          supplierProductId: row.supplier_product_id,
+          type: row.condition_type,
+          price: row.price,
+          stock: row.stock_status,
+          shipping: row.shipping,
+
+          url:
+            row.affiliate_url ||
+            row.url,
+
+          lastChecked:
+            row.last_checked
+        });
+
+      }
+
+    }
+
+
+    return json({
+      products: Object.values(products)
+    });
+
+  } catch (error) {
+
+    return json({
+      error: "Search failed.",
+      details: error.message
+    }, 500);
+
+  }
+}
 
     // -----------------------------
     // NORMAL WEBSITE FILES
