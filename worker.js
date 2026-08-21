@@ -1180,7 +1180,7 @@ async function searchSupplier(
     const response =
       await fetchWithTimeout(
         supplier.searchUrl,
-        10000
+        4000
       );
 
 
