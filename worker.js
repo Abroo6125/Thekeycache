@@ -28,78 +28,46 @@ export default {
           parsedUrl = new URL(productUrl);
         } catch {
           return json(
-            {
-              error:
-                "That doesn't look like a valid URL."
-            },
+            { error: "That doesn't look like a valid URL." },
             400
           );
         }
 
-        if (
-          !["http:", "https:"].includes(
-            parsedUrl.protocol
-          )
-        ) {
+        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
           return json(
-            {
-              error:
-                "Only normal web URLs are allowed."
-            },
+            { error: "Only normal web URLs are allowed." },
             400
           );
         }
 
-
-        const response = await fetch(
-          productUrl,
-          {
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0 KeyCache Product Importer"
-            }
+        const response = await fetch(productUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 KeyCache Product Importer"
           }
-        );
-
+        });
 
         if (!response.ok) {
           return json({
             success: false,
             blocked: true,
-
             message:
               "This supplier would not allow KeyCache to read the page automatically.",
-
             data: {
               supplierName:
-                supplierFromHostname(
-                  parsedUrl.hostname
-                ),
-
+                supplierFromHostname(parsedUrl.hostname),
               url: productUrl
             }
           });
         }
 
-
-        const html =
-          await response.text();
-
+        const html = await response.text();
 
         const title =
-          getMeta(
-            html,
-            "property",
-            "og:title"
-          ) ||
-          getMeta(
-            html,
-            "name",
-            "twitter:title"
-          ) ||
+          getMeta(html, "property", "og:title") ||
+          getMeta(html, "name", "twitter:title") ||
           getTitle(html) ||
           "";
-
 
         const price =
           getMeta(
@@ -107,59 +75,34 @@ export default {
             "property",
             "product:price:amount"
           ) ||
-          extractJsonLdValue(
-            html,
-            "price"
-          ) ||
+          extractJsonLdValue(html, "price") ||
           "";
-
 
         let stock =
-          extractJsonLdValue(
-            html,
-            "availability"
-          ) ||
+          extractJsonLdValue(html, "availability") ||
           "";
-
 
         if (stock.includes("InStock")) {
           stock = "In stock";
-        }
-
-        else if (
-          stock.includes("OutOfStock")
-        ) {
+        } else if (stock.includes("OutOfStock")) {
           stock = "Out of stock";
         }
 
-
         const sku =
-          extractJsonLdValue(
-            html,
-            "sku"
-          ) ||
+          extractJsonLdValue(html, "sku") ||
           "";
-
 
         const condition =
-          extractJsonLdValue(
-            html,
-            "itemCondition"
-          ) ||
+          extractJsonLdValue(html, "itemCondition") ||
           "";
-
 
         return json({
           success: true,
-
           data: {
-            title:
-              cleanText(title),
+            title: cleanText(title),
 
             supplierName:
-              supplierFromHostname(
-                parsedUrl.hostname
-              ),
+              supplierFromHostname(parsedUrl.hostname),
 
             supplierProductId:
               cleanText(sku),
@@ -183,11 +126,8 @@ export default {
       } catch (error) {
         return json(
           {
-            error:
-              "Import failed.",
-
-            details:
-              error.message
+            error: "Import failed.",
+            details: error.message
           },
           500
         );
@@ -205,151 +145,186 @@ export default {
       request.method === "POST"
     ) {
       try {
-        const data =
-          await request.json();
-
+        const data = await request.json();
 
         if (
-          !data.title ||
           !data.supplierName ||
           !data.url
         ) {
           return json(
             {
               error:
-                "Product title, supplier name, and product URL are required."
+                "Supplier name and product URL are required."
             },
             400
           );
         }
 
 
-        const slug =
-          createSlug(
-            [
-              data.vehicle,
-              data.years,
-              data.fccId,
-              data.oemPart,
-              data.title
-            ]
-              .filter(Boolean)
-              .join(" ")
-          );
+        // -------------------------------------------------
+        // USE EXISTING PRODUCT OR CREATE NEW MASTER PRODUCT
+        // -------------------------------------------------
+
+        const existingProductId =
+          Number(data.existingProductId) || null;
+
+        let product;
 
 
-        // ---------------------------------
-        // CREATE OR UPDATE MASTER PRODUCT
-        // ---------------------------------
+        if (existingProductId) {
 
-        await env.DB.prepare(`
-          INSERT INTO products (
-            slug,
-            title,
-            vehicle,
-            years,
-            frequency,
-            chip_id,
-            button_configuration,
-            fcc_id,
-            oem_part,
-            buttons,
-            remote_start,
-            notes,
-            updated_at
-          )
+          product =
+            await env.DB.prepare(`
+              SELECT *
+              FROM products
+              WHERE id = ?
+            `)
+              .bind(existingProductId)
+              .first();
 
-          VALUES (
-            ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?,
-            CURRENT_TIMESTAMP
-          )
+          if (!product) {
+            return json(
+              {
+                error:
+                  "The selected KeyCache product no longer exists."
+              },
+              400
+            );
+          }
 
-          ON CONFLICT(slug)
-          DO UPDATE SET
+        } else {
 
-            title =
-              excluded.title,
+          if (!data.title) {
+            return json(
+              {
+                error:
+                  "Product title is required when creating a new KeyCache product."
+              },
+              400
+            );
+          }
 
-            vehicle =
-              excluded.vehicle,
-
-            years =
-              excluded.years,
-
-            frequency =
-              excluded.frequency,
-
-            chip_id =
-              excluded.chip_id,
-
-            button_configuration =
-              excluded.button_configuration,
-
-            fcc_id =
-              excluded.fcc_id,
-
-            oem_part =
-              excluded.oem_part,
-
-            buttons =
-              excluded.buttons,
-
-            remote_start =
-              excluded.remote_start,
-
-            notes =
-              excluded.notes,
-
-            updated_at =
-              CURRENT_TIMESTAMP
-        `)
-          .bind(
-            slug,
-
-            data.title || "",
-            data.vehicle || "",
-            data.years || "",
-
-            data.frequency || "",
-            data.chipId || "",
-            data.buttonConfiguration || "",
-
-            data.fccId || "",
-            data.oemPart || "",
-            data.buttons || "",
-
-            data.remoteStart
-              ? 1
-              : 0,
-
-            data.notes || ""
-          )
-          .run();
+          const slug =
+            createSlug(
+              [
+                data.vehicle,
+                data.years,
+                data.fccId,
+                data.oemPart,
+                data.title
+              ]
+                .filter(Boolean)
+                .join(" ")
+            );
 
 
-        const product =
           await env.DB.prepare(`
-            SELECT id
+            INSERT INTO products (
+              slug,
+              title,
+              vehicle,
+              years,
+              frequency,
+              chip_id,
+              button_configuration,
+              fcc_id,
+              oem_part,
+              buttons,
+              remote_start,
+              notes,
+              updated_at
+            )
 
-            FROM products
+            VALUES (
+              ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              CURRENT_TIMESTAMP
+            )
 
-            WHERE slug = ?
+            ON CONFLICT(slug)
+            DO UPDATE SET
+              title =
+                excluded.title,
+
+              vehicle =
+                excluded.vehicle,
+
+              years =
+                excluded.years,
+
+              frequency =
+                excluded.frequency,
+
+              chip_id =
+                excluded.chip_id,
+
+              button_configuration =
+                excluded.button_configuration,
+
+              fcc_id =
+                excluded.fcc_id,
+
+              oem_part =
+                excluded.oem_part,
+
+              buttons =
+                excluded.buttons,
+
+              remote_start =
+                excluded.remote_start,
+
+              notes =
+                excluded.notes,
+
+              updated_at =
+                CURRENT_TIMESTAMP
           `)
-            .bind(slug)
-            .first();
+            .bind(
+              slug,
+
+              data.title || "",
+              data.vehicle || "",
+              data.years || "",
+
+              data.frequency || "",
+              data.chipId || "",
+              data.buttonConfiguration || "",
+
+              data.fccId || "",
+              data.oemPart || "",
+              data.buttons || "",
+
+              data.remoteStart
+                ? 1
+                : 0,
+
+              data.notes || ""
+            )
+            .run();
 
 
-        if (!product) {
-          throw new Error(
-            "Product could not be found after saving."
-          );
+          product =
+            await env.DB.prepare(`
+              SELECT *
+              FROM products
+              WHERE slug = ?
+            `)
+              .bind(slug)
+              .first();
+
+
+          if (!product) {
+            throw new Error(
+              "Product could not be found after saving."
+            );
+          }
         }
 
 
-        // ---------------------------------
-        // CHECK FOR EXISTING SUPPLIER OFFER
-        // ---------------------------------
+
+        // -------------------------------------------------
+        // CHECK FOR DUPLICATE SUPPLIER LISTING
+        // -------------------------------------------------
 
         const existingListing =
           await env.DB.prepare(`
@@ -374,8 +349,6 @@ export default {
 
         if (existingListing) {
 
-          // UPDATE EXISTING OFFER
-
           await env.DB.prepare(`
             UPDATE supplier_listings
 
@@ -396,8 +369,7 @@ export default {
               data.supplierProductId || "",
               data.conditionType || "",
 
-              data.price ??
-                null,
+              data.price ?? null,
 
               data.stockStatus || "",
               data.shipping || "",
@@ -410,8 +382,6 @@ export default {
             .run();
 
         } else {
-
-          // CREATE NEW SUPPLIER OFFER
 
           await env.DB.prepare(`
             INSERT INTO supplier_listings (
@@ -440,12 +410,10 @@ export default {
               data.supplierProductId || "",
               data.conditionType || "",
 
-              data.price ??
-                null,
+              data.price ?? null,
 
               data.stockStatus || "",
               data.shipping || "",
-
               data.url,
               data.affiliateUrl || "",
 
@@ -461,7 +429,9 @@ export default {
           message:
             existingListing
               ? "Supplier listing updated."
-              : "Product saved to KeyCache.",
+              : existingProductId
+                ? "Supplier added to existing KeyCache product."
+                : "New product saved to KeyCache.",
 
           productId:
             product.id
@@ -470,11 +440,8 @@ export default {
       } catch (error) {
         return json(
           {
-            error:
-              "Unable to save product.",
-
-            details:
-              error.message
+            error: "Unable to save product.",
+            details: error.message
           },
           500
         );
@@ -487,21 +454,17 @@ export default {
     // HEALTH CHECK
     // =====================================================
 
-    if (
-      url.pathname === "/api/health"
-    ) {
+    if (url.pathname === "/api/health") {
       return json({
         success: true,
-
-        message:
-          "KeyCache API is alive."
+        message: "KeyCache API is alive."
       });
     }
 
 
 
     // =====================================================
-    // PUBLIC PRODUCT SEARCH
+    // PUBLIC SEARCH
     // =====================================================
 
     if (
@@ -509,13 +472,11 @@ export default {
       request.method === "GET"
     ) {
       try {
-
         const query =
           (
             url.searchParams.get("q") ||
             ""
           ).trim();
-
 
         if (!query) {
           return json({
@@ -523,10 +484,8 @@ export default {
           });
         }
 
-
         const search =
           `%${query}%`;
-
 
         const results =
           await env.DB.prepare(`
@@ -564,23 +523,14 @@ export default {
               ON s.product_id = p.id
 
             WHERE
-
               p.title LIKE ?
-
               OR p.vehicle LIKE ?
-
               OR p.years LIKE ?
-
               OR p.frequency LIKE ?
-
               OR p.chip_id LIKE ?
-
               OR p.button_configuration LIKE ?
-
               OR p.fcc_id LIKE ?
-
               OR p.oem_part LIKE ?
-
               OR p.notes LIKE ?
 
             ORDER BY
@@ -611,30 +561,16 @@ export default {
         const products = {};
 
 
-        for (
-          const row
-          of results.results
-        ) {
+        for (const row of results.results) {
 
-          if (
-            !products[row.id]
-          ) {
+          if (!products[row.id]) {
 
             products[row.id] = {
-              id:
-                row.id,
-
-              slug:
-                row.slug,
-
-              title:
-                row.title,
-
-              vehicle:
-                row.vehicle,
-
-              years:
-                row.years,
+              id: row.id,
+              slug: row.slug,
+              title: row.title,
+              vehicle: row.vehicle,
+              years: row.years,
 
               frequency:
                 row.frequency,
@@ -655,9 +591,7 @@ export default {
                 row.buttons,
 
               remoteStart:
-                Boolean(
-                  row.remote_start
-                ),
+                Boolean(row.remote_start),
 
               notes:
                 row.notes,
@@ -667,14 +601,9 @@ export default {
           }
 
 
-          if (
-            row.supplier_name
-          ) {
+          if (row.supplier_name) {
 
-            products[
-              row.id
-            ].suppliers.push({
-
+            products[row.id].suppliers.push({
               listingId:
                 row.listing_id,
 
@@ -712,20 +641,15 @@ export default {
 
         return json({
           products:
-            Object.values(
-              products
-            )
+            Object.values(products)
         });
 
       } catch (error) {
 
         return json(
           {
-            error:
-              "Search failed.",
-
-            details:
-              error.message
+            error: "Search failed.",
+            details: error.message
           },
           500
         );
@@ -739,8 +663,7 @@ export default {
     // =====================================================
 
     if (
-      url.pathname ===
-        "/api/admin/products" &&
+      url.pathname === "/api/admin/products" &&
       request.method === "GET"
     ) {
       try {
@@ -782,7 +705,7 @@ export default {
               ON s.product_id = p.id
 
             ORDER BY
-              p.id DESC,
+              p.title ASC,
               s.supplier_name ASC
           `)
             .all();
@@ -790,7 +713,6 @@ export default {
 
         return json({
           success: true,
-
           products:
             results.results
         });
@@ -817,15 +739,12 @@ export default {
     // =====================================================
 
     if (
-      url.pathname ===
-        "/api/admin/products" &&
+      url.pathname === "/api/admin/products" &&
       request.method === "PUT"
     ) {
       try {
-
         const data =
           await request.json();
-
 
         if (
           !data.productId ||
@@ -912,8 +831,7 @@ export default {
             data.supplierProductId || "",
             data.conditionType || "",
 
-            data.price ??
-              null,
+            data.price ?? null,
 
             data.stockStatus || "",
             data.shipping || "",
@@ -929,7 +847,6 @@ export default {
 
         return json({
           success: true,
-
           message:
             "Product updated."
         });
@@ -956,19 +873,15 @@ export default {
     // =====================================================
 
     if (
-      url.pathname ===
-        "/api/admin/products" &&
+      url.pathname === "/api/admin/products" &&
       request.method === "DELETE"
     ) {
       try {
-
         const data =
           await request.json();
 
         const productId =
-          Number(
-            data.productId
-          );
+          Number(data.productId);
 
 
         if (!productId) {
@@ -984,7 +897,6 @@ export default {
 
         await env.DB.prepare(`
           DELETE FROM supplier_listings
-
           WHERE product_id = ?
         `)
           .bind(productId)
@@ -993,7 +905,6 @@ export default {
 
         await env.DB.prepare(`
           DELETE FROM products
-
           WHERE id = ?
         `)
           .bind(productId)
@@ -1002,7 +913,6 @@ export default {
 
         return json({
           success: true,
-
           message:
             "Product deleted."
         });
@@ -1025,12 +935,10 @@ export default {
 
 
     // =====================================================
-    // STATIC WEBSITE FILES
+    // STATIC WEBSITE
     // =====================================================
 
-    return env.ASSETS.fetch(
-      request
-    );
+    return env.ASSETS.fetch(request);
   }
 };
 
@@ -1040,10 +948,7 @@ export default {
 // HELPERS
 // =========================================================
 
-function json(
-  data,
-  status = 200
-) {
+function json(data, status = 200) {
   return new Response(
     JSON.stringify(
       data,
@@ -1088,15 +993,10 @@ function createSlug(text) {
 }
 
 
-function supplierFromHostname(
-  hostname
-) {
+function supplierFromHostname(hostname) {
   const host =
     hostname
-      .replace(
-        /^www\./,
-        ""
-      )
+      .replace(/^www\./, "")
       .toLowerCase();
 
 
@@ -1157,11 +1057,7 @@ function getMeta(
   ];
 
 
-  for (
-    const pattern
-    of patterns
-  ) {
-
+  for (const pattern of patterns) {
     const match =
       html.match(pattern);
 
@@ -1176,7 +1072,6 @@ function getMeta(
 
 
 function getTitle(html) {
-
   const match =
     html.match(
       /<title[^>]*>([\s\S]*?)<\/title>/i
@@ -1192,7 +1087,6 @@ function extractJsonLdValue(
   html,
   key
 ) {
-
   const scripts = [
     ...html.matchAll(
       /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
@@ -1200,10 +1094,7 @@ function extractJsonLdValue(
   ];
 
 
-  for (
-    const script
-    of scripts
-  ) {
+  for (const script of scripts) {
 
     try {
 
@@ -1223,13 +1114,11 @@ function extractJsonLdValue(
         result !== undefined &&
         result !== null
       ) {
-        return String(
-          result
-        );
+        return String(result);
       }
 
     } catch {
-      // Ignore invalid JSON-LD
+      // Ignore malformed JSON-LD
     }
   }
 
@@ -1242,7 +1131,6 @@ function findKey(
   value,
   targetKey
 ) {
-
   if (
     !value ||
     typeof value !== "object"
@@ -1258,9 +1146,7 @@ function findKey(
         targetKey
       )
   ) {
-    return value[
-      targetKey
-    ];
+    return value[targetKey];
   }
 
 
@@ -1270,7 +1156,8 @@ function findKey(
   ) {
 
     if (
-      typeof child === "object"
+      typeof child ===
+      "object"
     ) {
 
       const result =
@@ -1293,10 +1180,7 @@ function findKey(
 }
 
 
-function cleanCondition(
-  value
-) {
-
+function cleanCondition(value) {
   if (!value) {
     return "";
   }
@@ -1319,43 +1203,23 @@ function cleanCondition(
 
 
 function cleanText(value) {
-
   if (!value) {
     return "";
   }
 
 
   return String(value)
-    .replace(
-      /&amp;/g,
-      "&"
-    )
-    .replace(
-      /&quot;/g,
-      '"'
-    )
-    .replace(
-      /&#39;/g,
-      "'"
-    )
-    .replace(
-      /&lt;/g,
-      "<"
-    )
-    .replace(
-      /&gt;/g,
-      ">"
-    )
-    .replace(
-      /\s+/g,
-      " "
-    )
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 
 function escapeRegex(value) {
-
   return value.replace(
     /[.*+?^${}()|[\]\\]/g,
     "\\$&"
