@@ -130,24 +130,17 @@
     }
 
     try {
-      const response = await fetch("products.json");
-      const products = await response.json();
+     const response = await fetch(
+  "/api/search?q=" + encodeURIComponent(query)
+);
 
-      const matches = products.filter(product => {
-        const searchableText = [
-          product.title,
-          product.vehicle,
-          product.fccId,
-          product.oemPart,
-          ...(product.searchTerms || [])
-        ]
-          .join(" ")
-          .toLowerCase();
+const result = await response.json();
 
-        return searchableText.includes(query);
-      });
+if (!response.ok) {
+  throw new Error(result.error || "Search failed.");
+}
 
-      displayResults(matches, query);
+displayResults(result.products, query);
 
     } catch (error) {
       resultsSection.innerHTML =
