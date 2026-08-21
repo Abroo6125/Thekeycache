@@ -1189,7 +1189,7 @@ async function searchSupplier(
       );
 
     const detailCandidates =
-  candidates.slice(0, 7);
+  candidates.slice(0, 3);
 
     if (!candidates.length) {
       return {
