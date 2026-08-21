@@ -14,6 +14,9 @@ export default {
       const query =
         (url.searchParams.get("q") || "").trim();
 
+      const searchMode =
+  detectSearchMode(query);
+
       if (!query) {
         return json(
           {
@@ -95,6 +98,7 @@ products.sort((a, b) => {
       return json({
         success: true,
         query,
+        searchMode,
 
         prototype:
           "KEYCACHE_LIVE_SEARCH_V1",
@@ -1947,6 +1951,27 @@ async function fetchWithTimeout(
 // =========================================================
 // GENERAL HELPERS
 // =========================================================
+
+function detectSearchMode(query) {
+  const text =
+    String(query || "")
+      .trim()
+      .toLowerCase();
+
+  // Short locksmith identifiers:
+  // H92, B111, HYQ4EA, 5913441, etc.
+  const looksLikeIdentifier =
+    /^[a-z0-9-]{3,20}$/i.test(text) &&
+    !text.includes(" ");
+
+  // Multi-word searches are treated as
+  // discovery searches for now.
+  if (!looksLikeIdentifier) {
+    return "discovery";
+  }
+
+  return "comparison";
+}
 
 function json(
   data,
