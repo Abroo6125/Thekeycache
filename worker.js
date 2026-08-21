@@ -130,6 +130,9 @@ export default {
             title,
             vehicle,
             years,
+            frequency,
+            chip_id,
+            button_configuration,
             fcc_id,
             oem_part,
             buttons,
@@ -137,12 +140,15 @@ export default {
             notes,
             updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 
           ON CONFLICT(slug) DO UPDATE SET
             title = excluded.title,
             vehicle = excluded.vehicle,
             years = excluded.years,
+            frequency = excluded.frequency,
+            chip_id = excluded.chip_id,
+            button_configuration = excluded.button_configuration,
             fcc_id = excluded.fcc_id,
             oem_part = excluded.oem_part,
             buttons = excluded.buttons,
@@ -155,6 +161,9 @@ export default {
             data.title || "",
             data.vehicle || "",
             data.years || "",
+            data.frequency || "",
+            data.chipId || "",
+            data.buttonConfiguration || "",
             data.fccId || "",
             data.oemPart || "",
             data.buttons || "",
@@ -423,6 +432,9 @@ if (url.pathname === "/api/admin/products" && request.method === "PUT") {
         title = ?,
         vehicle = ?,
         years = ?,
+        frequency = ?,
+        chip_id = ?,
+        button_configuration = ?,
         fcc_id = ?,
         oem_part = ?,
         buttons = ?,
