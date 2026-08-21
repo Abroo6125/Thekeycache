@@ -1,6 +1,49 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    
+    // =====================================================
+// ROYAL CONNECTION ISOLATION TEST
+// =====================================================
+
+if (url.pathname === "/api/test-royal") {
+  const query = (url.searchParams.get("q") || "H92").trim();
+
+  const target =
+    "https://royalkeysupply.com/search?q=" +
+    encodeURIComponent(query);
+
+  const started = Date.now();
+
+  try {
+    const response = await fetch(target, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 KeyCache Prototype"
+      },
+      redirect: "follow"
+    });
+
+    return json({
+      success: true,
+      supplier: "Royal Key Supply",
+      status: response.status,
+      ok: response.ok,
+      fetchMs: Date.now() - started,
+      contentType:
+        response.headers.get("content-type"),
+      finalUrl: response.url
+    });
+
+  } catch (error) {
+    return json({
+      success: false,
+      supplier: "Royal Key Supply",
+      fetchMs: Date.now() - started,
+      error: error.message
+    });
+  }
+}
 
     // =====================================================
 // LIVE SUPPLIER SEARCH - TIMING DIAGNOSTIC
