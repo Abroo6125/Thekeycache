@@ -24,23 +24,17 @@ export default {
       }
 
 
-      const supplierConfigs = [
-        {
-          name: "Royal Key Supply",
-          baseUrl: "https://royalkeysupply.com",
-          searchUrl:
-            "https://royalkeysupply.com/search?q=" +
-            encodeURIComponent(query)
-        },
+    const supplierConfigs = [
+  {
+    name: "Royal Key Supply",
+    baseUrl: "https://royalkeysupply.com"
+  },
 
-        {
-          name: "CLK Supplies",
-          baseUrl: "https://www.clksupplies.com",
-          searchUrl:
-            "https://www.clksupplies.com/search?q=" +
-            encodeURIComponent(query)
-        }
-      ];
+  {
+    name: "CLK Supplies",
+    baseUrl: "https://www.clksupplies.com"
+  }
+];
 
 
       const supplierResults =
@@ -1171,87 +1165,241 @@ async function searchSupplier(
   const started =
     Date.now();
 
+
   try {
 
     // =====================================
-    // FETCH SUPPLIER SEARCH PAGE ONLY
+    // SHOPIFY PREDICTIVE SEARCH JSON
     // =====================================
+
+    const searchUrl =
+      supplier.baseUrl +
+      "/search/suggest.json?q=" +
+      encodeURIComponent(query) +
+      "&resources[type]=product" +
+      "&resources[limit]=10";
+
 
     const response =
       await fetchWithTimeout(
-        supplier.searchUrl,
-        4000
+        searchUrl,
+        5000
       );
 
 
-    const html =
-      await response.text();
+    if (!response.ok) {
+      return {
+        supplier:
+          supplier.name,
+
+        ok: false,
+
+        searchStatus:
+          response.status,
+
+        searchMs:
+          Date.now() - started,
+
+        error:
+          "Supplier search returned HTTP " +
+          response.status,
+
+        products: []
+      };
+    }
+
+
+    const data =
+      await response.json();
+
+
+    const rawProducts =
+      data?.resources
+        ?.results
+        ?.products || [];
 
 
     // =====================================
-    // FIND + RANK CANDIDATES
-    // =====================================
-
-    const candidates =
-      findProductCandidates(
-        html,
-        supplier.baseUrl,
-        query,
-        15
-      );
-
-
-    // =====================================
-    // RETURN TOP 5
-    //
-    // IMPORTANT:
-    // We are NOT opening individual
-    // product pages during broad search.
+    // NORMALIZE SUPPLIER RESULTS
     // =====================================
 
     const products =
-      candidates
-        .slice(0, 5)
-        .map(
-          candidate => ({
+      rawProducts
+        .map(product => {
+
+          const title =
+            cleanText(
+              product.title || ""
+            );
+
+
+          let productUrl =
+            product.url || "";
+
+
+          if (
+            productUrl.startsWith("/")
+          ) {
+            productUrl =
+              supplier.baseUrl +
+              productUrl;
+          }
+
+
+          // Shopify URLs sometimes contain
+          // predictive-search tracking params.
+          // We only need the real product path.
+
+          try {
+            const parsed =
+              new URL(
+                productUrl,
+                supplier.baseUrl
+              );
+
+            parsed.search = "";
+
+            productUrl =
+              parsed.toString();
+
+          } catch {
+            // Keep original URL if parsing fails.
+          }
+
+
+          const rawPrice =
+            product.price;
+
+
+          let price =
+            null;
+
+
+          if (
+            rawPrice !== undefined &&
+            rawPrice !== null &&
+            rawPrice !== ""
+          ) {
+
+            const cleanedPrice =
+              String(rawPrice)
+                .replace(
+                  /[^0-9.]/g,
+                  ""
+                );
+
+
+            if (
+              cleanedPrice &&
+              !Number.isNaN(
+                Number(cleanedPrice)
+              )
+            ) {
+              price =
+                Number(
+                  cleanedPrice
+                );
+            }
+          }
+
+
+          const matchScore =
+            scoreCandidate(
+              title,
+              productUrl,
+              query
+            );
+
+
+          return {
             supplier:
               supplier.name,
 
-            title:
-              candidate.title,
+            title,
 
-            price:
-              null,
+            price,
 
             sku:
               "",
 
             stock:
-              "View supplier",
+              product.available === true
+                ? "In stock"
+                : product.available === false
+                  ? "Out of stock"
+                  : "Check supplier",
 
             type:
-              guessProductType(
-                candidate.title
+              classifySearchProduct(
+                product,
+                title
               ),
 
             url:
-              candidate.url,
+              productUrl,
 
-            matchScore:
-              candidate.score,
+            matchScore,
 
             searchStage:
-              "candidate"
-          })
-        );
+              "predictive-json"
+          };
+        })
+
+
+        // Remove anything with no useful title.
+        .filter(
+          product =>
+            product.title
+        )
+
+
+        // Strongest match first.
+        .sort(
+          (a, b) => {
+
+            if (
+              b.matchScore !==
+              a.matchScore
+            ) {
+              return (
+                b.matchScore -
+                a.matchScore
+              );
+            }
+
+
+            const priceA =
+              typeof a.price ===
+                "number"
+                ? a.price
+                : Infinity;
+
+
+            const priceB =
+              typeof b.price ===
+                "number"
+                ? b.price
+                : Infinity;
+
+
+            return (
+              priceA -
+              priceB
+            );
+          }
+        )
+
+
+        // Keep the best five from
+        // this supplier.
+        .slice(0, 5);
 
 
     return {
       supplier:
         supplier.name,
 
-      ok:
-        response.ok,
+      ok: true,
 
       searchStatus:
         response.status,
@@ -1270,8 +1418,7 @@ async function searchSupplier(
       supplier:
         supplier.name,
 
-      ok:
-        false,
+      ok: false,
 
       searchMs:
         Date.now() -
@@ -2026,6 +2173,104 @@ function guessProductType(
   return "Unknown";
 }
 
+function classifySearchProduct(
+  product,
+  title
+) {
+  const combined =
+    [
+      title,
+      product.type,
+      product.vendor,
+      ...(Array.isArray(product.tags)
+        ? product.tags
+        : [])
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+
+  if (
+    combined.includes(
+      "emergency key"
+    ) ||
+    combined.includes(
+      "insert key"
+    )
+  ) {
+    return "Emergency Key";
+  }
+
+
+  if (
+    combined.includes(
+      "emulator"
+    ) ||
+    combined.includes(
+      "programmer"
+    ) ||
+    combined.includes(
+      "tool"
+    )
+  ) {
+    return "Tool / Programmer";
+  }
+
+
+  if (
+    combined.includes(
+      "refurb"
+    )
+  ) {
+    return "Refurbished OEM";
+  }
+
+
+  if (
+    combined.includes(
+      "aftermarket"
+    )
+  ) {
+    return "Aftermarket";
+  }
+
+
+  if (
+    combined.includes(
+      "oem"
+    ) ||
+    combined.includes(
+      "strattec"
+    )
+  ) {
+    return "OEM";
+  }
+
+
+  if (
+    combined.includes(
+      "smart key"
+    ) ||
+    combined.includes(
+      "smartkey"
+    ) ||
+    combined.includes(
+      "remote"
+    ) ||
+    combined.includes(
+      "fob"
+    )
+  ) {
+    return "Smart Key / Remote";
+  }
+
+
+  return (
+    product.type ||
+    "Unknown"
+  );
+}
 
 function getMeta(
   html,
