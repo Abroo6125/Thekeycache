@@ -45,6 +45,52 @@ if (url.pathname === "/api/test-royal") {
   }
 }
 
+// =====================================================
+// ROYAL HTML READ TEST
+// =====================================================
+
+if (url.pathname === "/api/test-royal-html") {
+  const query = (url.searchParams.get("q") || "H92").trim();
+
+  const target =
+    "https://royalkeysupply.com/search?q=" +
+    encodeURIComponent(query);
+
+  const started = Date.now();
+
+  try {
+    const response = await fetch(target, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 KeyCache Prototype"
+      },
+      redirect: "follow"
+    });
+
+    const html = await response.text();
+
+    return json({
+      success: true,
+      supplier: "Royal Key Supply",
+      status: response.status,
+      fetchAndReadMs: Date.now() - started,
+      htmlLength: html.length,
+      containsH92:
+        html.toLowerCase().includes("h92"),
+      containsProducts:
+        html.includes("/products/")
+    });
+
+  } catch (error) {
+    return json({
+      success: false,
+      supplier: "Royal Key Supply",
+      fetchAndReadMs: Date.now() - started,
+      error: error.message
+    });
+  }
+}
+
     // =====================================================
 // LIVE SUPPLIER SEARCH - TIMING DIAGNOSTIC
 // =====================================================
