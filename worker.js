@@ -1457,25 +1457,6 @@ for (
 
 
     return {
-      supplier:
-        supplier.name,
-
-      ok: true,
-
-      searchStatus:
-        response.status,
-
-      searchMs:
-        Date.now() -
-        started,
-
-      products
-    };
-
-
-  } catch (error) {
-
-   return {
   supplier:
     supplier.name,
 
@@ -1493,6 +1474,25 @@ for (
 
   products
 };
+
+
+  } catch (error) {
+
+    return {
+      supplier:
+        supplier.name,
+
+      ok: false,
+
+      searchMs:
+        Date.now() -
+        started,
+
+      error:
+        error.message,
+
+      products: []
+    };
   }
 }
 
