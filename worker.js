@@ -1419,7 +1419,6 @@ function scoreCandidate(
       .toLowerCase()
       .trim();
 
-
   let score = 0;
 
 
@@ -1431,50 +1430,173 @@ function scoreCandidate(
     score += 500;
   }
 
-
-  if (
-    titleLower.includes(
-      queryLower
-    )
-  ) {
+  if (titleLower.includes(queryLower)) {
     score += 250;
   }
 
-
-  if (
-    urlLower.includes(
-      queryLower
-    )
-  ) {
+  if (urlLower.includes(queryLower)) {
     score += 100;
   }
-
 
   const words =
     queryLower
       .split(/\s+/)
       .filter(Boolean);
 
-
   for (const word of words) {
-
-    if (
-      titleLower.includes(
-        word
-      )
-    ) {
+    if (titleLower.includes(word)) {
       score += 40;
     }
 
-
-    if (
-      urlLower.includes(
-        word
-      )
-    ) {
+    if (urlLower.includes(word)) {
       score += 15;
     }
   }
+
+
+  // =====================================
+  // PRODUCT INTENT
+  // =====================================
+
+  const wantsSmartKey =
+    queryLower.includes("smart key") ||
+    queryLower.includes("smartkey");
+
+  const wantsEmergencyKey =
+    queryLower.includes("emergency key") ||
+    queryLower.includes("insert key");
+
+  const wantsTool =
+    queryLower.includes("tool") ||
+    queryLower.includes("emulator") ||
+    queryLower.includes("programmer");
+
+
+  // If user asked for a smart key,
+  // strongly favor actual smart-key listings.
+
+  if (wantsSmartKey) {
+    if (
+      titleLower.includes("smart key") ||
+      titleLower.includes("smartkey")
+    ) {
+      score += 250;
+    }
+
+    if (
+      titleLower.includes("remote") ||
+      titleLower.includes("fob")
+    ) {
+      score += 80;
+    }
+
+    if (
+      titleLower.includes("emergency key") ||
+      titleLower.includes("insert key")
+    ) {
+      score -= 500;
+    }
+
+    if (
+      titleLower.includes("emulator") ||
+      titleLower.includes("programmer") ||
+      titleLower.includes("tool")
+    ) {
+      score -= 600;
+    }
+  }
+
+
+  // If user specifically asked for an emergency key,
+  // reverse the preference.
+
+  if (wantsEmergencyKey) {
+    if (
+      titleLower.includes("emergency key") ||
+      titleLower.includes("insert key")
+    ) {
+      score += 300;
+    }
+  }
+
+
+  // If user specifically asked for a tool,
+  // don't penalize tools.
+
+  if (wantsTool) {
+    if (
+      titleLower.includes("emulator") ||
+      titleLower.includes("programmer") ||
+      titleLower.includes("tool")
+    ) {
+      score += 300;
+    }
+  }
+
+
+  // =====================================
+  // H92 FAMILY BOOSTS
+  // =====================================
+
+  if (
+    queryLower.includes("h92") &&
+    titleLower.includes("h92-pt")
+  ) {
+    score += 120;
+  }
+
+  if (
+    queryLower.includes("h92") &&
+    (
+      titleLower.includes("5913441") ||
+      urlLower.includes("5913441")
+    )
+  ) {
+    score += 150;
+  }
+
+  if (
+    queryLower.includes("h92") &&
+    (
+      titleLower.includes("164-r8040") ||
+      urlLower.includes("164-r8040")
+    )
+  ) {
+    score += 150;
+  }
+
+  if (
+    queryLower.includes("h92") &&
+    titleLower.includes("strattec")
+  ) {
+    score += 75;
+  }
+
+
+  // =====================================
+  // BULK / BUNDLE PENALTIES
+  // =====================================
+
+  const userAskedForBulk =
+    /\b(pack|bundle|bulk|x\d+|\d+\s*pack)\b/i
+      .test(queryLower);
+
+  const bulkPattern =
+    /(?:pack|bundle)[\s_-]*(?:of[\s_-]*)?\d+|\d+[\s_-]*(?:pack|bundle)|x\d+|pk\d+/i;
+
+  if (
+    !userAskedForBulk &&
+    (
+      bulkPattern.test(titleLower) ||
+      bulkPattern.test(urlLower)
+    )
+  ) {
+    score -= 600;
+  }
+
+
+  return score;
+}
 
 
 
@@ -1978,39 +2100,56 @@ function guessProductType(
   title
 ) {
   const text =
-    String(
-      title || ""
-    )
+    String(title || "")
       .toLowerCase();
 
 
   if (
-    text.includes(
-      "aftermarket"
-    )
+    text.includes("emergency key") ||
+    text.includes("insert key")
+  ) {
+    return "Emergency Key";
+  }
+
+
+  if (
+    text.includes("emulator") ||
+    text.includes("programmer") ||
+    text.includes("tool")
+  ) {
+    return "Tool / Programmer";
+  }
+
+
+  if (
+    text.includes("aftermarket")
   ) {
     return "Aftermarket";
   }
 
 
   if (
-    text.includes(
-      "refurb"
-    )
+    text.includes("refurb")
   ) {
     return "Refurbished OEM";
   }
 
 
   if (
-    text.includes(
-      "oem"
-    ) ||
-    text.includes(
-      "strattec"
-    )
+    text.includes("oem") ||
+    text.includes("strattec")
   ) {
     return "OEM";
+  }
+
+
+  if (
+    text.includes("smart key") ||
+    text.includes("smartkey") ||
+    text.includes("remote") ||
+    text.includes("fob")
+  ) {
+    return "Smart Key / Remote";
   }
 
 
