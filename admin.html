@@ -276,10 +276,30 @@
 
         try {
 
-          const response = await fetch(
-            "/api/import-product",
-            {
-              method: "POST",
+          const editingProduct =
+  productForm.dataset.productId;
+
+if (editingProduct) {
+  data.productId =
+    Number(
+      productForm.dataset.productId
+    );
+
+  data.listingId =
+    Number(
+      productForm.dataset.listingId
+    );
+}
+
+const response = await fetch(
+  editingProduct
+    ? "/api/admin/products"
+    : "/api/products",
+  {
+    method:
+      editingProduct
+        ? "PUT"
+        : "POST",
 
               headers: {
                 "Content-Type":
@@ -495,7 +515,11 @@
 
           saveMessage.textContent =
             "✓ Product saved to KeyCache!";
+          
+delete productForm.dataset.productId;
+delete productForm.dataset.listingId;
 
+loadProducts();
 
         } catch (error) {
 
