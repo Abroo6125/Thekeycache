@@ -354,6 +354,181 @@ if (url.pathname === "/api/search" && request.method === "GET") {
 }
 
     // -----------------------------
+// LIST PRODUCTS FOR ADMIN
+// -----------------------------
+if (url.pathname === "/api/admin/products" && request.method === "GET") {
+  try {
+    const results = await env.DB.prepare(`
+      SELECT
+        p.id,
+        p.slug,
+        p.title,
+        p.vehicle,
+        p.years,
+        p.fcc_id,
+        p.oem_part,
+        p.buttons,
+        p.remote_start,
+        p.notes,
+
+        s.id AS listing_id,
+        s.supplier_name,
+        s.supplier_product_id,
+        s.condition_type,
+        s.price,
+        s.stock_status,
+        s.shipping,
+        s.url,
+        s.affiliate_url,
+        s.last_checked
+
+      FROM products p
+
+      LEFT JOIN supplier_listings s
+        ON s.product_id = p.id
+
+      ORDER BY p.id DESC
+    `).all();
+
+    return json({
+      success: true,
+      products: results.results
+    });
+
+  } catch (error) {
+    return json({
+      error: "Unable to load products.",
+      details: error.message
+    }, 500);
+  }
+}
+
+
+// -----------------------------
+// UPDATE PRODUCT
+// -----------------------------
+if (url.pathname === "/api/admin/products" && request.method === "PUT") {
+  try {
+    const data = await request.json();
+
+    if (!data.productId || !data.listingId) {
+      return json({
+        error: "Product ID and listing ID are required."
+      }, 400);
+    }
+
+    await env.DB.prepare(`
+      UPDATE products
+      SET
+        title = ?,
+        vehicle = ?,
+        years = ?,
+        fcc_id = ?,
+        oem_part = ?,
+        buttons = ?,
+        remote_start = ?,
+        notes = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `)
+      .bind(
+        data.title || "",
+        data.vehicle || "",
+        data.years || "",
+        data.fccId || "",
+        data.oemPart || "",
+        data.buttons || "",
+        data.remoteStart ? 1 : 0,
+        data.notes || "",
+        data.productId
+      )
+      .run();
+
+    await env.DB.prepare(`
+      UPDATE supplier_listings
+      SET
+        supplier_name = ?,
+        supplier_product_id = ?,
+        condition_type = ?,
+        price = ?,
+        stock_status = ?,
+        shipping = ?,
+        url = ?,
+        affiliate_url = ?,
+        last_checked = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `)
+      .bind(
+        data.supplierName || "",
+        data.supplierProductId || "",
+        data.conditionType || "",
+        data.price || null,
+        data.stockStatus || "",
+        data.shipping || "",
+        data.url || "",
+        data.affiliateUrl || "",
+        new Date().toISOString().slice(0, 10),
+        data.listingId
+      )
+      .run();
+
+    return json({
+      success: true,
+      message: "Product updated."
+    });
+
+  } catch (error) {
+    return json({
+      error: "Unable to update product.",
+      details: error.message
+    }, 500);
+  }
+}
+
+
+// -----------------------------
+// DELETE PRODUCT
+// -----------------------------
+if (url.pathname === "/api/admin/products" && request.method === "DELETE") {
+  try {
+    const data = await request.json();
+
+    const productId = Number(data.productId);
+
+    if (!productId) {
+      return json({
+        error: "Product ID is required."
+      }, 400);
+    }
+
+    await env.DB.prepare(`
+      DELETE FROM supplier_listings
+      WHERE product_id = ?
+    `)
+      .bind(productId)
+      .run();
+
+    await env.DB.prepare(`
+      DELETE FROM products
+      WHERE id = ?
+    `)
+      .bind(productId)
+      .run();
+
+    return json({
+      success: true,
+      message: "Product deleted."
+    });
+
+  } catch (error) {
+    return json({
+      error: "Unable to delete product.",
+      details: error.message
+    }, 500);
+  }
+}
+    // -----------------------------
     // NORMAL WEBSITE FILES
     // -----------------------------
     return env.ASSETS.fetch(request);
