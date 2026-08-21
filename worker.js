@@ -1540,7 +1540,7 @@ function scoreCandidate(
   score -= 600;
 }
 
-
+  }
   // If user specifically asked for an emergency key,
   // reverse the preference.
 
