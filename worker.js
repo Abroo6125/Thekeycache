@@ -2,8 +2,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // =====================================================
-    // LIVE SUPPLIER SEARCH - PRODUCT EXTRACTION TEST
+        // =====================================================
+    // LIVE SUPPLIER SEARCH - PRODUCT DETAIL TEST
     // =====================================================
 
     if (url.pathname === "/api/live-search" && request.method === "GET") {
@@ -15,7 +15,7 @@ export default {
         }, 400);
       }
 
-      const supplierTests = [
+      const suppliers = [
         {
           supplier: "Royal Key Supply",
           baseUrl: "https://royalkeysupply.com",
@@ -33,9 +33,9 @@ export default {
       ];
 
       const results = await Promise.all(
-        supplierTests.map(async supplier => {
+        suppliers.map(async supplier => {
           try {
-            const response = await fetch(supplier.searchUrl, {
+            const searchResponse = await fetch(supplier.searchUrl, {
               headers: {
                 "User-Agent":
                   "Mozilla/5.0 KeyCache Prototype Search Test"
@@ -43,21 +43,17 @@ export default {
               redirect: "follow"
             });
 
-            const html = await response.text();
+            const html = await searchResponse.text();
 
-            // Find product links inside the returned HTML.
             const productLinkRegex =
               /<a[^>]+href=["']([^"']*\/products\/[^"'?#]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
 
-            const foundProducts = [];
+            const candidates = [];
             const seenUrls = new Set();
 
             let match;
 
-            while (
-              (match = productLinkRegex.exec(html)) !== null &&
-              foundProducts.length < 20
-            ) {
+            while ((match = productLinkRegex.exec(html)) !== null) {
               let productUrl = match[1];
 
               if (productUrl.startsWith("//")) {
@@ -69,14 +65,15 @@ export default {
                   supplier.baseUrl + "/" + productUrl;
               }
 
-              // Remove duplicate product URLs.
               productUrl = productUrl.split("?")[0];
 
               if (seenUrls.has(productUrl)) {
                 continue;
               }
 
-              const rawTitle = match[2]
+              let rawTitle = match[2]
+                .replace(/<script[\s\S]*?<\/script>/gi, " ")
+                .replace(/<style[\s\S]*?<\/style>/gi, " ")
                 .replace(/<[^>]*>/g, " ")
                 .replace(/&amp;/g, "&")
                 .replace(/&quot;/g, '"')
@@ -85,35 +82,151 @@ export default {
                 .replace(/\s+/g, " ")
                 .trim();
 
-              // Ignore links that contain no readable text.
+              // Clean CLK's extra attribute junk.
+              rawTitle = rawTitle
+                .replace(
+                  /^"+\s*class="[^"]*"\s*>?/gi,
+                  ""
+                )
+                .replace(
+                  /"+\s*class="[^"]*"\s*>?/gi,
+                  ""
+                )
+                .trim();
+
               if (!rawTitle) {
+                continue;
+              }
+
+              const titleLower =
+                rawTitle.toLowerCase();
+
+              const queryLower =
+                query.toLowerCase();
+
+              const containsQuery =
+                titleLower.includes(queryLower);
+
+              if (!containsQuery) {
                 continue;
               }
 
               seenUrls.add(productUrl);
 
-              foundProducts.push({
+              candidates.push({
                 title: rawTitle.slice(0, 250),
-                url: productUrl,
-                containsQuery: rawTitle
-                  .toLowerCase()
-                  .includes(query.toLowerCase())
+                url: productUrl
               });
+
+              if (candidates.length >= 3) {
+                break;
+              }
             }
 
-            // Put obvious query matches first.
-            foundProducts.sort((a, b) => {
-              if (a.containsQuery && !b.containsQuery) return -1;
-              if (!a.containsQuery && b.containsQuery) return 1;
-              return 0;
-            });
+            const detailedProducts =
+              await Promise.all(
+                candidates.map(async candidate => {
+                  try {
+                    const productResponse =
+                      await fetch(candidate.url, {
+                        headers: {
+                          "User-Agent":
+                            "Mozilla/5.0 KeyCache Prototype Product Test"
+                        },
+                        redirect: "follow"
+                      });
+
+                    const productHtml =
+                      await productResponse.text();
+
+                    const title =
+                      getMeta(
+                        productHtml,
+                        "property",
+                        "og:title"
+                      ) ||
+                      getTitle(productHtml) ||
+                      candidate.title;
+
+                    const price =
+                      getMeta(
+                        productHtml,
+                        "property",
+                        "product:price:amount"
+                      ) ||
+                      extractJsonLdValue(
+                        productHtml,
+                        "price"
+                      ) ||
+                      "";
+
+                    let stock =
+                      extractJsonLdValue(
+                        productHtml,
+                        "availability"
+                      ) ||
+                      "";
+
+                    if (stock.includes("InStock")) {
+                      stock = "In stock";
+                    } else if (
+                      stock.includes("OutOfStock")
+                    ) {
+                      stock = "Out of stock";
+                    }
+
+                    const sku =
+                      extractJsonLdValue(
+                        productHtml,
+                        "sku"
+                      ) ||
+                      "";
+
+                    const condition =
+                      extractJsonLdValue(
+                        productHtml,
+                        "itemCondition"
+                      ) ||
+                      "";
+
+                    return {
+                      title: cleanText(title),
+                      price:
+                        price &&
+                        !Number.isNaN(Number(price))
+                          ? Number(price)
+                          : null,
+                      stock:
+                        stock || "Check supplier",
+                      sku: cleanText(sku),
+                      type:
+                        cleanCondition(condition) ||
+                        guessProductType(title),
+                      url: candidate.url
+                    };
+                  } catch (error) {
+                    return {
+                      title: candidate.title,
+                      price: null,
+                      stock: "Check supplier",
+                      sku: "",
+                      type: guessProductType(
+                        candidate.title
+                      ),
+                      url: candidate.url,
+                      error: error.message
+                    };
+                  }
+                })
+              );
 
             return {
               supplier: supplier.supplier,
-              status: response.status,
-              ok: response.ok,
-              productsFound: foundProducts.length,
-              products: foundProducts.slice(0, 10)
+              searchStatus: searchResponse.status,
+              ok: searchResponse.ok,
+              productsFound:
+                detailedProducts.length,
+              products: detailedProducts
             };
           } catch (error) {
             return {
@@ -131,7 +244,7 @@ export default {
         success: true,
         query,
         message:
-          "Product extraction prototype. Nothing has been saved to KeyCache.",
+          "Live product detail prototype. Nothing has been saved to KeyCache.",
         results
       });
     }
@@ -1357,4 +1470,25 @@ function escapeRegex(value) {
     /[.*+?^${}()|[\]\\]/g,
     "\\$&"
   );
+}
+
+function guessProductType(title) {
+  const text = String(title || "").toLowerCase();
+
+  if (text.includes("aftermarket")) {
+    return "Aftermarket";
+  }
+
+  if (
+    text.includes("oem") ||
+    text.includes("strattec")
+  ) {
+    return "OEM";
+  }
+
+  if (text.includes("refurb")) {
+    return "Refurbished";
+  }
+
+  return "Unknown";
 }
