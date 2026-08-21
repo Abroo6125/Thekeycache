@@ -164,7 +164,19 @@ displayResults(result.products, query);
     resultsSection.innerHTML = products.map(product => {
 
       const sortedSuppliers = [...product.suppliers]
-        .sort((a, b) => a.price - b.price);
+  .sort((a, b) => {
+    const priceA =
+      typeof a.price === "number"
+        ? a.price
+        : Infinity;
+
+    const priceB =
+      typeof b.price === "number"
+        ? b.price
+        : Infinity;
+
+    return priceA - priceB;
+  });
 
       const supplierRows = sortedSuppliers.map((supplier, index) => `
         <div class="supplier-row">
@@ -175,8 +187,12 @@ displayResults(result.products, query);
           </div>
 
           <div class="supplier-price">
-            $${supplier.price.toFixed(2)}
-            ${index === 0 ? '<span class="best-price">Lowest price</span>' : ''}
+            ${typeof supplier.price === "number"
+  ? "$" + supplier.price.toFixed(2)
+  : "Check price"}
+            ${index === 0 && typeof supplier.price === "number"
+  ? '<span class="best-price">Lowest price</span>'
+  : ''}
           </div>
 
           <div class="supplier-stock">
