@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -16,6 +18,7 @@
     rel="stylesheet"
     href="style.css"
   >
+
 </head>
 
 
@@ -72,8 +75,6 @@
         product type, and purchasing options.
       </p>
 
-
-      <!-- SEARCH BAR -->
 
       <div class="search-card">
 
@@ -202,23 +203,22 @@
         "searchButton"
       );
 
+
     const searchInput =
       document.getElementById(
         "searchInput"
       );
 
 
-    // -------------------------------------
-    // CREATE RESULTS AREA
-    // -------------------------------------
-
     const resultsSection =
       document.createElement(
         "section"
       );
 
+
     resultsSection.id =
       "results";
+
 
     resultsSection.className =
       "results";
@@ -232,11 +232,12 @@
 
 
 
-    // =====================================
+    // =====================================================
     // SEARCH
-    // =====================================
+    // =====================================================
 
     async function performSearch() {
+
 
       const query =
         searchInput.value.trim();
@@ -244,7 +245,9 @@
 
       if (!query) {
 
+
         resultsSection.innerHTML = `
+
           <div class="no-results">
 
             <p>
@@ -253,13 +256,18 @@
             </p>
 
           </div>
+
         `;
 
+
         return;
+
       }
 
 
+
       resultsSection.innerHTML = `
+
         <div class="no-results">
 
           <p>
@@ -267,17 +275,22 @@
           </p>
 
         </div>
+
       `;
+
 
 
       try {
 
+
         const response =
           await fetch(
+
             "/api/search?q=" +
             encodeURIComponent(
               query
             )
+
           );
 
 
@@ -287,28 +300,39 @@
 
         if (!response.ok) {
 
+
           throw new Error(
+
             result.error ||
             "Search failed."
+
           );
+
         }
 
 
+
         displayResults(
+
           result.products || [],
           query
+
         );
 
 
       } catch (error) {
 
+
         console.error(
+
           "SEARCH ERROR:",
           error
+
         );
 
 
         resultsSection.innerHTML = `
+
           <div class="no-results">
 
             <h2>
@@ -321,27 +345,35 @@
             </p>
 
           </div>
+
         `;
+
+
       }
+
+
     }
 
 
 
-    // =====================================
+    // =====================================================
     // DISPLAY RESULTS
-    // =====================================
+    // =====================================================
 
     function displayResults(
       products,
       query
     ) {
 
+
       if (
         !Array.isArray(products) ||
         products.length === 0
       ) {
 
+
         resultsSection.innerHTML = `
+
           <div class="no-results">
 
             <h2>
@@ -354,20 +386,21 @@
             </p>
 
           </div>
+
         `;
 
+
         return;
+
       }
 
 
+
       resultsSection.innerHTML =
+
         products
           .map(product => {
 
-
-            // ---------------------------------
-            // SORT SUPPLIERS BY PRICE
-            // ---------------------------------
 
             const sortedSuppliers =
               [
@@ -378,6 +411,7 @@
               ]
                 .sort(
                   (a, b) => {
+
 
                     const priceA =
                       typeof a.price ===
@@ -397,21 +431,72 @@
                       priceA -
                       priceB
                     );
+
+
                   }
                 );
 
 
 
+            // =================================================
+            // PRICE CATEGORY HELPERS
+            // =================================================
+
+
+            function getPriceCategory(
+              supplier
+            ) {
+
+
+              const type =
+                (
+                  supplier.type ||
+                  ""
+                )
+                  .toLowerCase();
+
+
+              if (
+                type.includes(
+                  "aftermarket"
+                )
+              ) {
+
+                return "aftermarket";
+
+              }
+
+
+              if (
+                type.includes("oem") ||
+                type.includes("strattec")
+              ) {
+
+                return "oem";
+
+              }
+
+
+              return "other";
+
+            }
+
+
+
             // ---------------------------------
-            // FIND LOWEST NUMERIC PRICE
+            // FIND LOWEST OEM PRICE
             // ---------------------------------
 
-            const numericPrices =
+
+            const oemPrices =
               sortedSuppliers
                 .filter(
                   supplier =>
+                    getPriceCategory(
+                      supplier
+                    ) === "oem" &&
                     typeof supplier.price ===
-                    "number"
+                      "number"
                 )
                 .map(
                   supplier =>
@@ -419,18 +504,50 @@
                 );
 
 
-            const lowestPrice =
-              numericPrices.length > 0
+            const lowestOemPrice =
+              oemPrices.length > 0
                 ? Math.min(
-                    ...numericPrices
+                    ...oemPrices
                   )
                 : null;
 
 
 
             // ---------------------------------
-            // BUILD SUPPLIER ROWS
+            // FIND LOWEST AFTERMARKET PRICE
             // ---------------------------------
+
+
+            const aftermarketPrices =
+              sortedSuppliers
+                .filter(
+                  supplier =>
+                    getPriceCategory(
+                      supplier
+                    ) ===
+                      "aftermarket" &&
+                    typeof supplier.price ===
+                      "number"
+                )
+                .map(
+                  supplier =>
+                    supplier.price
+                );
+
+
+            const lowestAftermarketPrice =
+              aftermarketPrices.length > 0
+                ? Math.min(
+                    ...aftermarketPrices
+                  )
+                : null;
+
+
+
+            // =================================================
+            // BUILD SUPPLIER ROWS
+            // =================================================
+
 
             let supplierRows = "";
 
@@ -440,7 +557,9 @@
               0
             ) {
 
+
               supplierRows = `
+
                 <div class="supplier-row">
 
                   <p>
@@ -449,21 +568,31 @@
                   </p>
 
                 </div>
+
               `;
+
 
             } else {
 
+
               supplierRows =
+
                 sortedSuppliers
                   .map(
                     supplier => {
 
 
-                      // PRICE
+                      const category =
+                        getPriceCategory(
+                          supplier
+                        );
+
+
 
                       const priceDisplay =
                         typeof supplier.price ===
                         "number"
+
                           ? "$" +
                             supplier.price
                               .toFixed(2)
@@ -472,54 +601,83 @@
 
 
 
-                      // LOWEST PRICE BADGE
+                      let priceBadge =
+                        "";
 
-                      const isLowestPrice =
-                        lowestPrice !== null &&
+
+
+                      if (
+
+                        category === "oem" &&
+
+                        lowestOemPrice !== null &&
+
                         typeof supplier.price ===
                           "number" &&
+
                         supplier.price ===
-                          lowestPrice;
+                          lowestOemPrice
+
+                      ) {
 
 
-                      const lowestPriceBadge =
-                        isLowestPrice
-                          ? `
-                            <span
-                              class="best-price"
-                            >
-                              Lowest price
-                            </span>
-                          `
-                          : "";
+                        priceBadge = `
+
+                          <span class="best-price">
+                            Lowest OEM
+                          </span>
+
+                        `;
+
+
+                      }
 
 
 
-                      // STOCK
+                      if (
+
+                        category ===
+                          "aftermarket" &&
+
+                        lowestAftermarketPrice !==
+                          null &&
+
+                        typeof supplier.price ===
+                          "number" &&
+
+                        supplier.price ===
+                          lowestAftermarketPrice
+
+                      ) {
+
+
+                        priceBadge = `
+
+                          <span class="best-price">
+                            Lowest aftermarket
+                          </span>
+
+                        `;
+
+
+                      }
+
+
 
                       const stockDisplay =
                         supplier.stock ||
                         "Check stock";
 
 
-
-                      // SHIPPING
-
                       const shippingDisplay =
                         supplier.shipping ||
                         "Check supplier";
 
 
-
-                      // TYPE
-
                       const typeDisplay =
                         supplier.type ||
                         "Type not listed";
 
-
-
-                      // LINK
 
                       const supplierUrl =
                         supplier.url ||
@@ -528,6 +686,7 @@
 
 
                       return `
+
                         <div
                           class="supplier-row"
                         >
@@ -537,18 +696,25 @@
                             class="supplier-info"
                           >
 
+
                             <strong>
+
                               ${escapeHtml(
                                 supplier.name ||
                                 "Supplier"
                               )}
+
                             </strong>
 
+
                             <span>
+
                               ${escapeHtml(
                                 typeDisplay
                               )}
+
                             </span>
+
 
                           </div>
 
@@ -558,9 +724,12 @@
                             class="supplier-price"
                           >
 
+
                             ${priceDisplay}
 
-                            ${lowestPriceBadge}
+
+                            ${priceBadge}
+
 
                           </div>
 
@@ -570,9 +739,11 @@
                             class="supplier-stock"
                           >
 
+
                             ${escapeHtml(
                               stockDisplay
                             )}
+
 
                           </div>
 
@@ -582,15 +753,18 @@
                             class="supplier-shipping"
                           >
 
+
                             ${escapeHtml(
                               shippingDisplay
                             )}
+
 
                           </div>
 
 
 
                           <a
+
                             class="supplier-button"
 
                             href="${escapeAttribute(
@@ -600,32 +774,45 @@
                             target="_blank"
 
                             rel="noopener noreferrer"
+
                           >
+
                             View Supplier
+
                           </a>
 
 
                         </div>
+
                       `;
+
+
                     }
                   )
                   .join("");
+
+
             }
 
 
 
-            // ---------------------------------
-            // PRODUCT META INFORMATION
-            // ---------------------------------
+            // =================================================
+            // MASTER PRODUCT DETAILS
+            // =================================================
 
-            const details = [];
+
+            const details =
+              [];
+
 
 
             if (
               product.fccId
             ) {
 
+
               details.push(`
+
                 <span>
 
                   <strong>
@@ -637,7 +824,10 @@
                   )}
 
                 </span>
+
               `);
+
+
             }
 
 
@@ -646,7 +836,9 @@
               product.oemPart
             ) {
 
+
               details.push(`
+
                 <span>
 
                   <strong>
@@ -658,7 +850,10 @@
                   )}
 
                 </span>
+
               `);
+
+
             }
 
 
@@ -667,7 +862,9 @@
               product.frequency
             ) {
 
+
               details.push(`
+
                 <span>
 
                   <strong>
@@ -679,7 +876,10 @@
                   )}
 
                 </span>
+
               `);
+
+
             }
 
 
@@ -688,7 +888,9 @@
               product.chipId
             ) {
 
+
               details.push(`
+
                 <span>
 
                   <strong>
@@ -700,7 +902,10 @@
                   )}
 
                 </span>
+
               `);
+
+
             }
 
 
@@ -709,7 +914,9 @@
               product.buttonConfiguration
             ) {
 
+
               details.push(`
+
                 <span>
 
                   <strong>
@@ -721,16 +928,16 @@
                   )}
 
                 </span>
+
               `);
+
+
             }
 
 
 
-            // ---------------------------------
-            // VEHICLE / YEAR DISPLAY
-            // ---------------------------------
-
-            let vehicleLine = "";
+            let vehicleLine =
+              "";
 
 
             if (
@@ -738,7 +945,9 @@
               product.years
             ) {
 
+
               vehicleLine = `
+
                 <p>
 
                   ${
@@ -765,16 +974,16 @@
                   }
 
                 </p>
+
               `;
+
+
             }
 
 
 
-            // ---------------------------------
-            // PRODUCT CARD
-            // ---------------------------------
-
             return `
+
               <article
                 class="product-result"
               >
@@ -784,7 +993,9 @@
                   class="product-header"
                 >
 
+
                   <div>
+
 
                     <span
                       class="result-label"
@@ -794,16 +1005,20 @@
 
 
                     <h2>
+
                       ${escapeHtml(
                         product.title ||
                         "Untitled Product"
                       )}
+
                     </h2>
 
 
                     ${vehicleLine}
 
+
                   </div>
+
 
                 </div>
 
@@ -812,6 +1027,7 @@
                 ${
                   details.length > 0
                     ? `
+
                       <div
                         class="product-meta"
                       >
@@ -819,6 +1035,7 @@
                         ${details.join("")}
 
                       </div>
+
                     `
                     : ""
                 }
@@ -835,75 +1052,97 @@
 
 
               </article>
+
             `;
+
+
           })
           .join("");
+
+
     }
 
 
 
-    // =====================================
-    // SEARCH BUTTON
-    // =====================================
+    // =====================================================
+    // SEARCH EVENTS
+    // =====================================================
+
 
     searchButton.addEventListener(
+
       "click",
       performSearch
+
     );
 
 
 
-    // =====================================
-    // ENTER KEY SEARCH
-    // =====================================
-
     searchInput.addEventListener(
+
       "keydown",
+
       function(event) {
+
 
         if (
           event.key ===
           "Enter"
         ) {
 
+
           performSearch();
+
+
         }
+
+
       }
+
     );
 
 
 
-    // =====================================
-    // HTML SAFETY HELPERS
-    // =====================================
+    // =====================================================
+    // SAFETY HELPERS
+    // =====================================================
+
 
     function escapeHtml(
       value
     ) {
 
+
       return String(
         value ?? ""
       )
+
         .replace(
           /&/g,
           "&amp;"
         )
+
         .replace(
           /</g,
           "&lt;"
         )
+
         .replace(
           />/g,
           "&gt;"
         )
+
         .replace(
           /"/g,
           "&quot;"
         )
+
         .replace(
           /'/g,
           "&#039;"
         );
+
+
     }
 
 
@@ -912,25 +1151,32 @@
       value
     ) {
 
+
       return String(
         value ?? ""
       )
+
         .replace(
           /&/g,
           "&amp;"
         )
+
         .replace(
           /"/g,
           "&quot;"
         )
+
         .replace(
           /</g,
           "&lt;"
         )
+
         .replace(
           />/g,
           "&gt;"
         );
+
+
     }
 
 
@@ -938,4 +1184,5 @@
 
 
 </body>
+
 </html>
