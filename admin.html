@@ -519,22 +519,110 @@ const response = await fetch(
 delete productForm.dataset.productId;
 delete productForm.dataset.listingId;
 
-loadProducts();
+const productList =
+  document.getElementById("productList");
 
-        } catch (error) {
+const refreshProducts =
+  document.getElementById("refreshProducts");
+          
+async function loadProducts() {
+  productList.innerHTML =
+    "<p>Loading products...</p>";
 
-          console.error(error);
+  try {
+    const response =
+      await fetch("/api/admin/products");
 
-          saveMessage.textContent =
-            "Save failed: " +
-            error.message;
+    const result =
+      await response.json();
 
-        }
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        "Unable to load products."
+      );
+    }
 
-      }
-    );
+    const products =
+      Array.isArray(result.products)
+        ? result.products
+        : [];
 
-  </script>
+    if (products.length === 0) {
+      productList.innerHTML =
+        "<p>No products yet.</p>";
+      return;
+    }
 
-</body>
-</html>
+    productList.innerHTML =
+      products.map(product => {
+
+        const title =
+          product.title ||
+          "Untitled Product";
+
+        const supplier =
+          product.supplier_name ||
+          "No supplier";
+
+        const price =
+          typeof product.price === "number"
+            ? "$" + product.price.toFixed(2)
+            : "No price";
+
+        const encodedProduct =
+          encodeURIComponent(
+            JSON.stringify(product)
+          );
+
+        return `
+          <div class="admin-product-card">
+
+            <div class="admin-product-info">
+              <strong>${title}</strong>
+              <span>${supplier}</span>
+              <span>${price}</span>
+            </div>
+
+            <div class="admin-product-actions">
+
+              <button
+                type="button"
+                class="edit-product"
+                data-product="${encodedProduct}"
+              >
+                Edit
+              </button>
+
+              <button
+                type="button"
+                class="delete-product"
+                data-product-id="${product.id}"
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+        `;
+      }).join("");
+
+  } catch (error) {
+    console.error("LOAD PRODUCTS ERROR:", error);
+
+    productList.innerHTML = `
+      <p>
+        Unable to load products:
+        ${error.message}
+      </p>
+    `;
+  }
+}
+
+refreshProducts.addEventListener(
+  "click",
+  loadProducts
+);
+
+loadProducts();        
