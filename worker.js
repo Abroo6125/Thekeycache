@@ -1229,32 +1229,42 @@ async function searchSupplier(
                   candidate.url
                 );
 
-              return {
-                supplier:
-                  supplier.name,
+             const finalTitle =
+  details.title ||
+  candidate.title;
 
-                title:
-                  details.title ||
-                  candidate.title,
+const finalScore =
+  scoreCandidate(
+    finalTitle,
+    candidate.url,
+    query
+  );
 
-                price:
-                  details.price,
+return {
+  supplier:
+    supplier.name,
 
-                sku:
-                  details.sku,
+  title:
+    finalTitle,
 
-                stock:
-                  details.stock,
+  price:
+    details.price,
 
-                type:
-                  details.type,
+  sku:
+    details.sku,
 
-                url:
-                  candidate.url,
+  stock:
+    details.stock,
 
-                matchScore:
-                  candidate.score
-              };
+  type:
+    details.type,
+
+  url:
+    candidate.url,
+
+  matchScore:
+    finalScore
+};
 
             } catch (error) {
 
@@ -1510,21 +1520,25 @@ function scoreCandidate(
       score += 80;
     }
 
-    if (
-      titleLower.includes("emergency key") ||
-      titleLower.includes("insert key")
-    ) {
-      score -= 500;
-    }
+  if (
+  titleLower.includes("emergency key") ||
+  titleLower.includes("insert key") ||
+  urlLower.includes("emergency-key") ||
+  urlLower.includes("insert-key")
+) {
+  score -= 500;
+}
 
     if (
-      titleLower.includes("emulator") ||
-      titleLower.includes("programmer") ||
-      titleLower.includes("tool")
-    ) {
-      score -= 600;
-    }
-  }
+  titleLower.includes("emulator") ||
+  titleLower.includes("programmer") ||
+  titleLower.includes("tool") ||
+  urlLower.includes("emulator") ||
+  urlLower.includes("programmer") ||
+  urlLower.includes("tool")
+) {
+  score -= 600;
+}
 
 
   // If user specifically asked for an emergency key,
