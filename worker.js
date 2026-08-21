@@ -2,6 +2,87 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // =====================================================
+    // DIAGNOSTIC LIVE SUPPLIER SEARCH
+    // =====================================================
+
+    if (url.pathname === "/api/live-search" && request.method === "GET") {
+      const query = (url.searchParams.get("q") || "").trim();
+
+      if (!query) {
+        return json({
+          error: "Search query is required."
+        }, 400);
+      }
+
+      const supplierTests = [
+        {
+          supplier: "Royal Key Supply",
+          searchUrl:
+            "https://royalkeysupply.com/search?q=" +
+            encodeURIComponent(query)
+        },
+        {
+          supplier: "CLK Supplies",
+          searchUrl:
+            "https://www.clksupplies.com/search?q=" +
+            encodeURIComponent(query)
+        }
+      ];
+
+      const results = await Promise.all(
+        supplierTests.map(async supplier => {
+          try {
+            const response = await fetch(supplier.searchUrl, {
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 KeyCache Prototype Search Test"
+              },
+              redirect: "follow"
+            });
+
+            const contentType =
+              response.headers.get("content-type") || "";
+
+            const text = await response.text();
+
+            return {
+              supplier: supplier.supplier,
+              requestedUrl: supplier.searchUrl,
+              finalUrl: response.url,
+              status: response.status,
+              ok: response.ok,
+              contentType,
+              responseLength: text.length,
+              containsQuery: text
+                .toLowerCase()
+                .includes(query.toLowerCase()),
+              containsH92: text
+                .toLowerCase()
+                .includes("h92"),
+              preview: text
+                .replace(/\s+/g, " ")
+                .slice(0, 500)
+            };
+          } catch (error) {
+            return {
+              supplier: supplier.supplier,
+              requestedUrl: supplier.searchUrl,
+              ok: false,
+              error: error.message
+            };
+          }
+        })
+      );
+
+      return json({
+        success: true,
+        query,
+        message:
+          "Diagnostic only. No supplier data has been saved.",
+        results
+      });
+    }
 
     // =====================================================
     // IMPORT PRODUCT FROM SUPPLIER URL
