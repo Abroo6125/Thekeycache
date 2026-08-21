@@ -90,7 +90,90 @@ if (url.pathname === "/api/test-royal-html") {
     });
   }
 }
+// =====================================================
+// ROYAL FIRST PRODUCT EXTRACTION TEST
+// =====================================================
 
+if (url.pathname === "/api/test-royal-product") {
+  const query = (url.searchParams.get("q") || "H92").trim();
+
+  const target =
+    "https://royalkeysupply.com/search?q=" +
+    encodeURIComponent(query);
+
+  try {
+    const response = await fetch(target, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 KeyCache Prototype"
+      },
+      redirect: "follow"
+    });
+
+    const html = await response.text();
+
+    const productLinkRegex =
+      /<a[^>]+href=["']([^"']*\/products\/[^"'?#]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+
+    let match;
+
+    while ((match = productLinkRegex.exec(html)) !== null) {
+      let productUrl = match[1];
+
+      if (productUrl.startsWith("//")) {
+        productUrl = "https:" + productUrl;
+      } else if (productUrl.startsWith("/")) {
+        productUrl =
+          "https://royalkeysupply.com" +
+          productUrl;
+      }
+
+      productUrl =
+        productUrl.split("?")[0];
+
+      const title =
+        match[2]
+          .replace(/<[^>]*>/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&nbsp;/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+
+      if (
+        title
+          .toLowerCase()
+          .includes(
+            query.toLowerCase()
+          )
+      ) {
+        return json({
+          success: true,
+          supplier: "Royal Key Supply",
+          query,
+          title,
+          productUrl
+        });
+      }
+    }
+
+    return json({
+      success: false,
+      supplier: "Royal Key Supply",
+      query,
+      message:
+        "No matching Royal product link found."
+    });
+
+  } catch (error) {
+    return json({
+      success: false,
+      supplier: "Royal Key Supply",
+      error: error.message
+    });
+  }
+}
     // =====================================================
 // LIVE SUPPLIER SEARCH - TIMING DIAGNOSTIC
 // =====================================================
