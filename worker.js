@@ -1319,9 +1319,6 @@ const detailedProducts =
       };
     }
   );
-        )
-      );
-
 
     return {
       supplier:
