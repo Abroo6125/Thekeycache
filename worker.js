@@ -114,7 +114,7 @@ products.sort((a, b) => {
         message:
           "Live supplier results. Nothing has been saved to D1.",
 
-        suppliers:
+ suppliers:
   supplierResults.map(
     result => ({
       supplier:
