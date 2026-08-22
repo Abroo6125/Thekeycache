@@ -629,6 +629,19 @@
                   class="product-result"
                 >
 
+${product.image
+  ? `
+    <div class="product-image-wrap">
+      <img
+        class="product-image"
+        src="${escapeAttribute(product.image)}"
+        alt="${escapeAttribute(product.title || "Product image")}"
+        loading="lazy"
+      >
+    </div>
+  `
+  : ""
+}
 
                   <div
                     class="product-header"
@@ -1199,6 +1212,17 @@
                     class="supplier-info"
                   >
 
+${product.image
+  ? `
+    <img
+      class="supplier-product-image"
+      src="${escapeAttribute(product.image)}"
+      alt="${escapeAttribute(product.title || "Product image")}"
+      loading="lazy"
+    >
+  `
+  : ""
+}
 
                     <strong>
 
