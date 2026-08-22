@@ -685,3 +685,24 @@ footer {
     flex-direction: column;
   }
 }
+
+.product-image-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.product-image {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.supplier-product-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
