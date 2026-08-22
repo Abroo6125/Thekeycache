@@ -2052,10 +2052,10 @@ function buildComparisonQueries(
   // FCC ID
   // =====================================
 
-  const fccMatches =
-    original.match(
-      /\b[A-Z0-9]{5,20}(?:-[A-Z0-9]{2,10})?\b/g
-    ) || [];
+ const fccMatches =
+  original.match(
+    /\b[A-Z]{2,5}\d[A-Z0-9]{2,15}(?:-[A-Z0-9]{2,10})?\b/g
+  ) || [];
 
 
   for (
@@ -2176,11 +2176,46 @@ function buildComparisonQueries(
   }
 
 
-  if (cleaned) {
-    queries.push(
-      cleaned
-    );
-  }
+ if (cleaned) {
+  queries.push(
+    cleaned
+  );
+}
+
+
+// =====================================
+// SUPPLIER-FRIENDLY FALLBACKS
+// =====================================
+
+const fccId =
+  fccMatches.find(
+    value =>
+      /^(HYQ|KR5|M3N)/i.test(value)
+  );
+
+const vehicleMatch =
+  original.match(
+    /\b(Camry|Corolla|RAV4|Highlander|Tacoma|Tundra|Avalon|Prius|4Runner|Sienna|Yaris)\b/i
+  );
+
+const vehicle =
+  vehicleMatch
+    ? vehicleMatch[1]
+    : "";
+
+
+if (
+  vehicle &&
+  fccId
+) {
+  queries.push(
+    `${vehicle} Smart Key ${fccId}`
+  );
+
+  queries.push(
+    `Toyota ${vehicle} ${fccId}`
+  );
+}
 
 
   // =====================================
