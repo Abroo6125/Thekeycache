@@ -743,3 +743,130 @@ footer {
   align-items: flex-start;
   gap: 4px;
 }
+
+/* ========================================
+   KEYCACHE COMPARISON MATRIX
+   ======================================== */
+
+.comparison-matrix {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.comparison-matrix-header,
+.comparison-matrix-row {
+  display: grid;
+  grid-template-columns:
+    minmax(170px, 0.8fr)
+    repeat(
+      var(--supplier-count),
+      minmax(240px, 1fr)
+    );
+  gap: 1px;
+  min-width: max-content;
+}
+
+.comparison-matrix-header {
+  margin-bottom: 1px;
+}
+
+.matrix-header-cell {
+  padding: 15px;
+  font-weight: 800;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.matrix-product-heading {
+  text-align: left;
+}
+
+.comparison-matrix-row {
+  margin-bottom: 1px;
+}
+
+.matrix-product-cell,
+.matrix-cell {
+  padding: 18px;
+  min-height: 250px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.matrix-product-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.matrix-product-cell strong {
+  font-size: 1rem;
+}
+
+.matrix-product-cell span {
+  font-size: 0.82rem;
+  opacity: 0.7;
+}
+
+.matrix-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  text-align: center;
+}
+
+.matrix-product-image {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.matrix-family-image {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.matrix-price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 1.12rem;
+  font-weight: 800;
+}
+
+.matrix-stock {
+  font-size: 0.85rem;
+}
+
+.matrix-product-title {
+  max-width: 260px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.matrix-cell small {
+  opacity: 0.7;
+}
+
+.matrix-empty {
+  justify-content: center;
+  opacity: 0.55;
+}
+
+@media (max-width: 800px) {
+
+  .comparison-matrix-header,
+  .comparison-matrix-row {
+    grid-template-columns:
+      minmax(140px, 0.7fr)
+      repeat(
+        var(--supplier-count),
+        minmax(210px, 1fr)
+      );
+  }
+
+}
