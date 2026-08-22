@@ -702,6 +702,23 @@ ${product.image
 
                     </span>
 
+                    ${
+  product.confidence?.label
+    ? `
+      <span
+        class="match-confidence match-confidence-${escapeAttribute(
+          product.confidence.level ||
+          "unknown"
+        )}"
+      >
+        ${escapeHtml(
+          product.confidence.label
+        )}
+      </span>
+    `
+    : ""
+}
+
 
                     <span>
 
