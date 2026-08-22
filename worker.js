@@ -631,14 +631,19 @@ products.sort((a, b) => {
     if (
       url.pathname === "/api/health"
     ) {
-      return json({
+    return json({
   success: true,
 
   version:
     "KEYCACHE_LIVE_SEARCH_V1",
 
   build:
-    "QUERY_BUILDER_V2",
+    "QUERY_BUILDER_V3_TEST",
+
+  queryBuilderTest:
+    buildComparisonQueries(
+      "Toyota Aftermarket 2018-2024 Camry Smart Key 4B Trunk FCCID: HYQ14FBC-0351 PN# 89904-06200"
+    ),
 
   message:
     "KeyCache API is alive."
