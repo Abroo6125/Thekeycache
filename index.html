@@ -126,7 +126,7 @@
 
 
     <!-- ===================================== -->
-    <!-- RESULTS GET INSERTED HERE -->
+    <!-- RESULTS INSERT HERE -->
     <!-- ===================================== -->
 
 
@@ -294,7 +294,6 @@
 
       if (!query) {
 
-
         resultsSection.innerHTML = `
 
           <div class="no-results">
@@ -308,9 +307,7 @@
 
         `;
 
-
         return;
-
       }
 
 
@@ -375,15 +372,13 @@
 
 
           // -----------------------------
-          // BROAD DISCOVERY SEARCH
+          // DISCOVERY MODE
           // -----------------------------
-
 
           if (
             liveResult.searchMode ===
             "discovery"
           ) {
-
 
             displayDiscoveryResults(
 
@@ -395,16 +390,13 @@
 
             );
 
-
             return;
           }
 
 
-
           // -----------------------------
-          // EXACT / COMPARISON SEARCH
+          // COMPARISON MODE
           // -----------------------------
-
 
           displayComparisonResults(
 
@@ -415,7 +407,6 @@
             liveResult.suppliers || []
 
           );
-
 
           return;
         }
@@ -445,7 +436,6 @@
 
         if (!databaseResponse.ok) {
 
-
           throw new Error(
 
             databaseResult.error ||
@@ -453,7 +443,6 @@
 
           );
         }
-
 
 
         displayDatabaseResults(
@@ -553,7 +542,6 @@
                   scoreB -
                   scoreA
                 );
-
               }
 
 
@@ -575,7 +563,6 @@
                 priceA -
                 priceB
               );
-
 
             }
           );
@@ -629,19 +616,33 @@
                   class="product-result"
                 >
 
-${product.image
-  ? `
-    <div class="product-image-wrap">
-      <img
-        class="product-image"
-        src="${escapeAttribute(product.image)}"
-        alt="${escapeAttribute(product.title || "Product image")}"
-        loading="lazy"
-      >
-    </div>
-  `
-  : ""
-}
+
+                  ${
+                    product.image
+                      ? `
+
+                        <div
+                          class="product-image-wrap"
+                        >
+
+                          <img
+                            class="product-image"
+                            src="${escapeAttribute(
+                              product.image
+                            )}"
+                            alt="${escapeAttribute(
+                              product.title ||
+                              "Product image"
+                            )}"
+                            loading="lazy"
+                          >
+
+                        </div>
+
+                      `
+                      : ""
+                  }
+
 
                   <div
                     class="product-header"
@@ -702,22 +703,27 @@ ${product.image
 
                     </span>
 
+
                     ${
-  product.confidence?.label
-    ? `
-      <span
-        class="match-confidence match-confidence-${escapeAttribute(
-          product.confidence.level ||
-          "unknown"
-        )}"
-      >
-        ${escapeHtml(
-          product.confidence.label
-        )}
-      </span>
-    `
-    : ""
-}
+                      product.confidence?.label
+                        ? `
+
+                          <span
+                            class="match-confidence match-confidence-${escapeAttribute(
+                              product.confidence.level ||
+                              "unknown"
+                            )}"
+                          >
+
+                            ${escapeHtml(
+                              product.confidence.label
+                            )}
+
+                          </span>
+
+                        `
+                        : ""
+                    }
 
 
                     <span>
@@ -794,6 +800,7 @@ ${product.image
 
                         </strong>
 
+
                         <span>
 
                           ${escapeHtml(
@@ -846,15 +853,18 @@ ${product.image
 
 
 
-                     <button
-  class="supplier-button"
-  type="button"
-  onclick="compareSelectedProduct(
-    '${escapeJs(product.title || "")}'
-  )"
->
-  Compare This Product
-</button>
+                      <button
+                        class="supplier-button compare-product-button"
+                        type="button"
+                        data-title="${escapeAttribute(
+                          product.title ||
+                          ""
+                        )}"
+                      >
+
+                        Compare This Product
+
+                      </button>
 
 
                     </div>
@@ -866,7 +876,6 @@ ${product.image
                 </article>
 
               `;
-
 
             }
           )
@@ -956,1027 +965,268 @@ ${product.image
 
 
     // =====================================================
+    // PRODUCT FAMILY KEY
+    // =====================================================
+
+
+    function getProductFamilyKey(
+      product
+    ) {
+
+
+      const title =
+        String(
+          product?.title ||
+          ""
+        ).toLowerCase();
+
+
+      // =================================
+      // FCC FAMILY
+      // =================================
+
+      const fccMatch =
+        title.match(
+          /\b(?:hyq|kr5|m3n)[a-z0-9]{2,15}(?:-[a-z0-9]{2,10})?\b/i
+        );
+
+
+      if (fccMatch) {
+
+        const fccFamily =
+          fccMatch[0]
+            .split("-")[0]
+            .toUpperCase();
+
+
+        return (
+          "FCC:" +
+          fccFamily
+        );
+      }
+
+
+      // =================================
+      // H-SERIES / KEY FAMILY
+      // =================================
+
+      const keyFamilyMatch =
+        title.match(
+          /\bH\d{2,3}\b/i
+        );
+
+
+      if (keyFamilyMatch) {
+
+        return (
+          "KEY:" +
+          keyFamilyMatch[0]
+            .toUpperCase()
+        );
+      }
+
+
+      // =================================
+      // FALLBACK
+      // =================================
+
+      return (
+        "TITLE:" +
+        title
+          .replace(
+            /\b(oem|aftermarket|refurbished|new)\b/gi,
+            " "
+          )
+          .replace(
+            /[^a-z0-9]+/gi,
+            " "
+          )
+          .replace(
+            /\s+/g,
+            " "
+          )
+          .trim()
+      );
+
+
+    }
+
+
+
+    // =====================================================
+    // GROUP COMPARISON PRODUCTS
+    // =====================================================
+
+
+    function groupComparisonProducts(
+      products
+    ) {
+
+
+      const groups =
+        new Map();
+
+
+      for (
+        const product
+        of products
+      ) {
+
+
+        const familyKey =
+          getProductFamilyKey(
+            product
+          );
+
+
+        if (
+          !groups.has(
+            familyKey
+          )
+        ) {
+
+          groups.set(
+            familyKey,
+            {
+              familyKey,
+              products: []
+            }
+          );
+        }
+
+
+        groups
+          .get(
+            familyKey
+          )
+          .products
+          .push(
+            product
+          );
+
+      }
+
+
+      const grouped =
+        Array.from(
+          groups.values()
+        );
+
+
+      for (
+        const group
+        of grouped
+      ) {
+
+
+        const prices =
+          group.products
+            .map(
+              product =>
+                product.price
+            )
+            .filter(
+              price =>
+                typeof price ===
+                "number"
+            );
+
+
+        group.lowestPrice =
+          prices.length
+            ? Math.min(
+                ...prices
+              )
+            : null;
+
+
+        group.products.sort(
+          (a, b) =>
+            (
+              Number(
+                b.matchScore
+              ) || 0
+            ) -
+            (
+              Number(
+                a.matchScore
+              ) || 0
+            )
+        );
+
+
+        group.primary =
+          group.products[0];
+
+      }
+
+
+      grouped.sort(
+        (a, b) =>
+          (
+            Number(
+              b.primary?.matchScore
+            ) || 0
+          ) -
+          (
+            Number(
+              a.primary?.matchScore
+            ) || 0
+          )
+      );
+
+
+      return grouped;
+
+
+    }
+
+
+
+    // =====================================================
     // EXACT PRODUCT COMPARISON
     // =====================================================
 
-function getProductFamilyKey(
-  product
-) {
-  const title =
-    String(
-      product?.title || ""
-    ).toLowerCase();
 
-
-  // =====================================
-  // FCC FAMILY
-  // =====================================
-
-  const fccMatch =
-    title.match(
-      /\b(?:hyq|kr5|m3n)[a-z0-9]{2,15}(?:-[a-z0-9]{2,10})?\b/i
-    );
-
-
-  if (fccMatch) {
-
-    const fccFamily =
-      fccMatch[0]
-        .split("-")[0]
-        .toUpperCase();
-
-
-    return (
-      "FCC:" +
-      fccFamily
-    );
-  }
-
-
-  // =====================================
-  // H-SERIES / COMMON KEY FAMILY
-  // =====================================
-
-  const keyFamilyMatch =
-    title.match(
-      /\bH\d{2,3}\b/i
-    );
-
-
-  if (keyFamilyMatch) {
-
-    return (
-      "KEY:" +
-      keyFamilyMatch[0]
-        .toUpperCase()
-    );
-  }
-
-
-  // =====================================
-  // FALLBACK
-  // =====================================
-
-  return (
-    "TITLE:" +
-    title
-      .replace(
-        /\b(oem|aftermarket|refurbished|new)\b/gi,
-        " "
-      )
-      .replace(
-        /[^a-z0-9]+/gi,
-        " "
-      )
-      .replace(
-        /\s+/g,
-        " "
-      )
-      .trim()
-  );
-}
-
-    function groupComparisonProducts(
-  products
-) {
-  const groups =
-    new Map();
-
-
-  for (
-    const product
-    of products
-  ) {
-
-    const familyKey =
-      getProductFamilyKey(
-        product
-      );
-
-
-    if (
-      !groups.has(
-        familyKey
-      )
-    ) {
-
-      groups.set(
-        familyKey,
-        {
-          familyKey,
-          products: []
-        }
-      );
-    }
-
-
-    groups
-      .get(familyKey)
-      .products
-      .push(product);
-  }
-
-
-  const grouped =
-    Array.from(
-      groups.values()
-    );
-
-
-  // Lowest available price
-  // inside each family.
-
-  for (
-    const group
-    of grouped
-  ) {
-
-    const prices =
-      group.products
-        .map(
-          product =>
-            product.price
-        )
-        .filter(
-          price =>
-            typeof price ===
-            "number"
-        );
-
-
-    group.lowestPrice =
-      prices.length
-        ? Math.min(
-            ...prices
-          )
-        : null;
-
-
-    // Strongest matching product
-    // becomes the representative.
-
-    group.products.sort(
-      (a, b) =>
-        (
-          Number(
-            b.matchScore
-          ) || 0
-        ) -
-        (
-          Number(
-            a.matchScore
-          ) || 0
-        )
-    );
-
-
-    group.primary =
-      group.products[0];
-  }
-
-
-  // Strongest families first.
-
-  grouped.sort(
-    (a, b) =>
-      (
-        Number(
-          b.primary?.matchScore
-        ) || 0
-      ) -
-      (
-        Number(
-          a.primary?.matchScore
-        ) || 0
-      )
-  );
-
-
-  return grouped;
-}
-    
     function displayComparisonResults(
-  products,
-  query,
-  supplierStatuses
-) {
-
-  // =====================================================
-  // SORT PRODUCTS
-  // =====================================================
-
-  const sortedProducts =
-    [...products].sort(
-      (a, b) => {
-
-        const scoreA =
-          typeof a.matchScore === "number"
-            ? a.matchScore
-            : 0;
-
-        const scoreB =
-          typeof b.matchScore === "number"
-            ? b.matchScore
-            : 0;
-
-
-        if (scoreB !== scoreA) {
-          return scoreB - scoreA;
-        }
-
-
-        const priceA =
-          typeof a.price === "number"
-            ? a.price
-            : Infinity;
-
-        const priceB =
-          typeof b.price === "number"
-            ? b.price
-            : Infinity;
-
-
-        return priceA - priceB;
-      }
-    );
-
-
-  // =====================================================
-  // GROUP PRODUCTS INTO FAMILIES
-  // =====================================================
-
-  const productGroups =
-    groupComparisonProducts(
-      sortedProducts
-    );
-
-
-  // =====================================================
-  // PRODUCT CATEGORY HELPER
-  // =====================================================
-
-  function getCategory(
-    product
-  ) {
-
-    const combined =
-      (
-        String(
-          product.type || ""
-        ) +
-        " " +
-        String(
-          product.title || ""
-        )
-      ).toLowerCase();
-
-
-    if (
-      combined.includes(
-        "aftermarket"
-      )
-    ) {
-      return "aftermarket";
-    }
-
-
-    if (
-      combined.includes(
-        "refurb"
-      )
-    ) {
-      return "refurbished";
-    }
-
-
-    if (
-      combined.includes(
-        "oem"
-      ) ||
-      combined.includes(
-        "strattec"
-      )
-    ) {
-      return "oem";
-    }
-
-
-    return "other";
-  }
-
-
-  // =====================================================
-  // SUPPLIER NAMES
-  // =====================================================
-
-  const supplierNames =
-    [
-      ...new Set(
-        sortedProducts
-          .map(
-            product =>
-              product.supplier
-          )
-          .filter(Boolean)
-      )
-    ];
-
-
-  // =====================================================
-  // BUILD MATRIX ROWS
-  // =====================================================
-
-  const matrixRows = [];
-
-
-  for (
-    const group
-    of productGroups
-  ) {
-
-    // -----------------------------------------------------
-    // Split each family into variants:
-    // OEM / Aftermarket / Refurbished / Other
-    // -----------------------------------------------------
-
-    const variants =
-      new Map();
-
-
-    for (
-      const product
-      of group.products
+      products,
+      query,
+      supplierStatuses
     ) {
 
-      const category =
-        getCategory(
-          product
-        );
+
+      // =================================
+      // SORT RESULTS
+      // =================================
+
+      const sortedProducts =
+        [...products]
+          .sort(
+            (a, b) => {
 
 
-      if (
-        !variants.has(
-          category
-        )
-      ) {
-        variants.set(
-          category,
-          []
-        );
-      }
+              const scoreA =
+                Number(
+                  a.matchScore
+                ) || 0;
 
 
-      variants
-        .get(category)
-        .push(product);
-    }
+              const scoreB =
+                Number(
+                  b.matchScore
+                ) || 0;
 
 
-    // -----------------------------------------------------
-    // BUILD EACH VARIANT ROW
-    // -----------------------------------------------------
+              if (
+                scoreB !== scoreA
+              ) {
 
-    for (
-      const [
-        variantKey,
-        variantProducts
-      ]
-      of variants
-    ) {
-
-      let variantLabel =
-        "Other";
-
-
-      if (
-        variantKey ===
-        "oem"
-      ) {
-        variantLabel =
-          "OEM";
-      }
-
-
-      if (
-        variantKey ===
-        "aftermarket"
-      ) {
-        variantLabel =
-          "Aftermarket";
-      }
-
-
-      if (
-        variantKey ===
-        "refurbished"
-      ) {
-        variantLabel =
-          "Refurbished OEM";
-      }
-
-
-      // -------------------------------------------------
-      // Strongest match becomes representative product
-      // -------------------------------------------------
-
-      variantProducts.sort(
-        (a, b) => {
-
-          const scoreA =
-            Number(
-              a.matchScore
-            ) || 0;
-
-          const scoreB =
-            Number(
-              b.matchScore
-            ) || 0;
-
-
-          if (
-            scoreB !== scoreA
-          ) {
-            return (
-              scoreB -
-              scoreA
-            );
-          }
-
-
-          const priceA =
-            typeof a.price ===
-              "number"
-              ? a.price
-              : Infinity;
-
-          const priceB =
-            typeof b.price ===
-              "number"
-              ? b.price
-              : Infinity;
-
-
-          return (
-            priceA -
-            priceB
-          );
-        }
-      );
-
-
-      const primary =
-        variantProducts[0];
-
-
-      // -------------------------------------------------
-      // Lowest price for this product variant
-      // -------------------------------------------------
-
-      const numericPrices =
-        variantProducts
-          .map(
-            product =>
-              product.price
-          )
-          .filter(
-            price =>
-              typeof price ===
-              "number"
-          );
-
-
-      const lowestVariantPrice =
-        numericPrices.length
-          ? Math.min(
-              ...numericPrices
-            )
-          : null;
-
-
-      // -------------------------------------------------
-      // BUILD SUPPLIER CELLS
-      // -------------------------------------------------
-
-      const supplierCells =
-        supplierNames
-          .map(
-            supplierName => {
-
-              const supplierProducts =
-                variantProducts
-                  .filter(
-                    product =>
-                      product.supplier ===
-                      supplierName
-                  )
-                  .sort(
-                    (a, b) => {
-
-                      const scoreA =
-                        Number(
-                          a.matchScore
-                        ) || 0;
-
-                      const scoreB =
-                        Number(
-                          b.matchScore
-                        ) || 0;
-
-
-                      if (
-                        scoreB !==
-                        scoreA
-                      ) {
-                        return (
-                          scoreB -
-                          scoreA
-                        );
-                      }
-
-
-                      const priceA =
-                        typeof a.price ===
-                          "number"
-                          ? a.price
-                          : Infinity;
-
-                      const priceB =
-                        typeof b.price ===
-                          "number"
-                          ? b.price
-                          : Infinity;
-
-
-                      return (
-                        priceA -
-                        priceB
-                      );
-                    }
-                  );
-
-
-              const product =
-                supplierProducts[0];
-
-
-              // -----------------------------------------
-              // Supplier has no match for this row
-              // -----------------------------------------
-
-              if (!product) {
-
-                return `
-
-                  <div
-                    class="matrix-cell matrix-empty"
-                  >
-
-                    <span>
-                      No matching listing
-                    </span>
-
-                  </div>
-
-                `;
+                return (
+                  scoreB -
+                  scoreA
+                );
               }
 
-
-              // -----------------------------------------
-              // PRICE
-              // -----------------------------------------
-
-              const priceDisplay =
-                typeof product.price ===
-                  "number"
-
-                  ? "$" +
-                    product.price
-                      .toFixed(2)
-
-                  : "Check price";
-
-
-              const isLowestPrice =
-                lowestVariantPrice !==
-                  null &&
-                product.price ===
-                  lowestVariantPrice;
-
-
-              // -----------------------------------------
-              // SUPPLIER CELL
-              // -----------------------------------------
-
-              return `
-
-                <div
-                  class="matrix-cell"
-                >
-
-
-                  ${
-                    product.image
-                      ? `
-
-                        <img
-                          class="matrix-product-image"
-                          src="${escapeAttribute(
-                            product.image
-                          )}"
-                          alt="${escapeAttribute(
-                            product.title ||
-                            "Product image"
-                          )}"
-                          loading="lazy"
-                        >
-
-                      `
-                      : ""
-                  }
-
-
-                  <div
-                    class="matrix-price"
-                  >
-
-                    ${escapeHtml(
-                      priceDisplay
-                    )}
-
-
-                    ${
-                      isLowestPrice
-                        ? `
-
-                          <span
-                            class="best-price"
-                          >
-                            Lowest price
-                          </span>
-
-                        `
-                        : ""
-                    }
-
-                  </div>
-
-
-                  <div
-                    class="matrix-stock"
-                  >
-
-                    ${escapeHtml(
-                      product.stock ||
-                      "Check supplier"
-                    )}
-
-                  </div>
-
-
-                  <div
-                    class="matrix-type"
-                  >
-
-                    ${escapeHtml(
-                      product.type ||
-                      "Type unknown"
-                    )}
-
-                  </div>
-
-
-                  ${
-                    product.confidence?.label
-                      ? `
-
-                        <span
-                          class="match-confidence match-confidence-${escapeAttribute(
-                            product.confidence.level ||
-                            "unknown"
-                          )}"
-                        >
-
-                          ${escapeHtml(
-                            product.confidence.label
-                          )}
-
-                        </span>
-
-                      `
-                      : ""
-                  }
-
-
-                  <div
-                    class="matrix-product-title"
-                  >
-
-                    ${escapeHtml(
-                      product.title ||
-                      "Product"
-                    )}
-
-                  </div>
-
-
-                  ${
-                    product.sku
-                      ? `
-
-                        <small>
-
-                          SKU:
-                          ${escapeHtml(
-                            product.sku
-                          )}
-
-                        </small>
-
-                      `
-                      : ""
-                  }
-
-
-                  <a
-                    class="supplier-button"
-                    href="${escapeAttribute(
-                      product.url ||
-                      "#"
-                    )}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-
-                    View Supplier
-
-                  </a>
-
-
-                </div>
-
-              `;
-            }
-          )
-          .join("");
-
-
-      // -------------------------------------------------
-      // LEFT PRODUCT CELL
-      // -------------------------------------------------
-
-      const productCell = `
-
-        <div
-          class="matrix-product-cell"
-        >
-
-
-          ${
-            primary?.image
-              ? `
-
-                <img
-                  class="matrix-family-image"
-                  src="${escapeAttribute(
-                    primary.image
-                  )}"
-                  alt="${escapeAttribute(
-                    primary.title ||
-                    "Product"
-                  )}"
-                  loading="lazy"
-                >
-
-              `
-              : ""
-          }
-
-
-          <strong>
-            ${escapeHtml(
-              variantLabel
-            )}
-          </strong>
-
-
-          <span>
-            ${escapeHtml(
-              group.familyKey
-            )}
-          </span>
-
-
-          ${
-            primary?.confidence?.label
-              ? `
-
-                <span
-                  class="match-confidence match-confidence-${escapeAttribute(
-                    primary.confidence.level ||
-                    "unknown"
-                  )}"
-                >
-
-                  ${escapeHtml(
-                    primary.confidence.label
-                  )}
-
-                </span>
-
-              `
-              : ""
-          }
-
-
-          <small>
-
-            ${escapeHtml(
-              primary?.type ||
-              ""
-            )}
-
-          </small>
-
-
-        </div>
-
-      `;
-
-
-      matrixRows.push(`
-
-        <div
-          class="comparison-matrix-row"
-        >
-
-          ${productCell}
-
-          ${supplierCells}
-
-        </div>
-
-      `);
-    }
-  }
-
-
-  // =====================================================
-  // MATRIX HEADER
-  // =====================================================
-
-  const matrixHeader = `
-
-    <div
-      class="comparison-matrix-header"
-    >
-
-      <div
-        class="matrix-header-cell matrix-product-heading"
-      >
-        Product
-      </div>
-
-
-      ${
-        supplierNames
-          .map(
-            supplierName => `
-
-              <div
-                class="matrix-header-cell"
-              >
-
-                ${escapeHtml(
-                  supplierName
-                )}
-
-              </div>
-
-            `
-          )
-          .join("")
-      }
-
-    </div>
-
-  `;
-
-
-  // =====================================================
-  // FULL MATRIX
-  // =====================================================
-
-  const supplierRows = `
-
-    <div
-      class="comparison-matrix"
-      style="--supplier-count: ${supplierNames.length};"
-    >
-
-      ${matrixHeader}
-
-      ${matrixRows.join("")}
-
-    </div>
-
-  `;
-
-
-  // =====================================================
-  // SUPPLIER STATUS
-  // =====================================================
-
-  const suppliersChecked =
-    supplierStatuses
-      .filter(
-        supplier =>
-          supplier.ok
-      )
-      .map(
-        supplier =>
-          supplier.supplier
-      )
-      .join(" • ");
-
-
-  // =====================================================
-  // RENDER COMPARISON PAGE
-  // =====================================================
-
-  resultsSection.innerHTML = `
-
-    <article
-      class="product-result"
-    >
-
-
-      <div
-        class="product-header"
-      >
-
-
-        <div>
-
-
-          <span
-            class="result-label"
-          >
-            PRODUCT COMPARISON
-          </span>
-
-
-          <h2>
-
-            Results for
-            "${escapeHtml(
-              query
-            )}"
-
-          </h2>
-
-
-          <p>
-
-            ${sortedProducts.length}
-            matching product${
-              sortedProducts.length ===
-                1
-                ? ""
-                : "s"
-            }
-
-            ${
-              suppliersChecked
-                ? " • " +
-                  escapeHtml(
-                    suppliersChecked
-                  )
-                : ""
-            }
-
-          </p>
-
-
-        </div>
-
-
-      </div>
-
-
-      ${supplierRows}
-
-
-    </article>
-
-  `;
-}
-    );
-
-
-const productGroups =
-  groupComparisonProducts(
-    sortedProducts
-  );
 
               const priceA =
                 typeof a.price ===
@@ -1997,11 +1247,25 @@ const productGroups =
                 priceB
               );
 
-
             }
           );
 
 
+
+      // =================================
+      // GROUP PRODUCTS
+      // =================================
+
+      const productGroups =
+        groupComparisonProducts(
+          sortedProducts
+        );
+
+
+
+      // =================================
+      // CATEGORY HELPER
+      // =================================
 
       function getCategory(
         product
@@ -2010,18 +1274,16 @@ const productGroups =
 
         const combined =
           (
-            (
+            String(
               product.type ||
               ""
             ) +
             " " +
-            (
+            String(
               product.title ||
               ""
             )
-          )
-            .toLowerCase();
-
+          ).toLowerCase();
 
 
         if (
@@ -2031,9 +1293,7 @@ const productGroups =
         ) {
 
           return "aftermarket";
-
         }
-
 
 
         if (
@@ -2043,9 +1303,7 @@ const productGroups =
         ) {
 
           return "refurbished";
-
         }
-
 
 
         if (
@@ -2058,612 +1316,652 @@ const productGroups =
         ) {
 
           return "oem";
-
         }
 
 
-
         return "other";
+
 
       }
 
 
 
-      const oemPrices =
-        sortedProducts
-          .filter(
-            product =>
-              getCategory(
-                product
-              ) === "oem" &&
-              typeof product.price ===
-                "number"
-          )
-          .map(
-            product =>
-              product.price
-          );
-
-
-      const lowestOemPrice =
-        oemPrices.length
-          ? Math.min(
-              ...oemPrices
-            )
-          : null;
-
-
-
-      const aftermarketPrices =
-        sortedProducts
-          .filter(
-            product =>
-              getCategory(
-                product
-              ) ===
-                "aftermarket" &&
-              typeof product.price ===
-                "number"
-          )
-          .map(
-            product =>
-              product.price
-          );
-
-
-      const lowestAftermarketPrice =
-        aftermarketPrices.length
-          ? Math.min(
-              ...aftermarketPrices
-            )
-          : null;
-
-
+      // =================================
+      // SUPPLIER COLUMNS
+      // =================================
 
       const supplierNames =
-  [
-    ...new Set(
-      sortedProducts
-        .map(
-          product =>
-            product.supplier
-        )
-        .filter(Boolean)
-    )
-  ];
-
-
-const matrixRows = [];
-
-
-for (
-  const group
-  of productGroups
-) {
-
-  // =====================================
-  // SPLIT FAMILY INTO PRODUCT VARIANTS
-  //
-  // For now:
-  // OEM / Aftermarket / Refurbished / Other
-  // become separate comparison rows.
-  // =====================================
-
-  const variants =
-    new Map();
-
-
-  for (
-    const product
-    of group.products
-  ) {
-
-    const category =
-      getCategory(
-        product
-      );
-
-
-    const variantKey =
-      category ||
-      "other";
-
-
-    if (
-      !variants.has(
-        variantKey
-      )
-    ) {
-
-      variants.set(
-        variantKey,
-        []
-      );
-    }
-
-
-    variants
-      .get(
-        variantKey
-      )
-      .push(
-        product
-      );
-  }
-
-
-  for (
-    const [
-      variantKey,
-      variantProducts
-    ]
-    of variants
-  ) {
-
-    // =====================================
-    // FRIENDLY VARIANT NAME
-    // =====================================
-
-    let variantLabel =
-      "Other";
-
-
-    if (
-      variantKey ===
-      "oem"
-    ) {
-      variantLabel =
-        "OEM";
-    }
-
-
-    if (
-      variantKey ===
-      "aftermarket"
-    ) {
-      variantLabel =
-        "Aftermarket";
-    }
-
-
-    if (
-      variantKey ===
-      "refurbished"
-    ) {
-      variantLabel =
-        "Refurbished OEM";
-    }
-
-
-    // =====================================
-    // REPRESENTATIVE PRODUCT
-    // =====================================
-
-    variantProducts.sort(
-      (a, b) =>
-        (
-          Number(
-            b.matchScore
-          ) || 0
-        ) -
-        (
-          Number(
-            a.matchScore
-          ) || 0
-        )
-    );
-
-
-    const primary =
-      variantProducts[0];
-
-
-    // =====================================
-    // LOWEST PRICE IN THIS VARIANT
-    // =====================================
-
-    const numericPrices =
-      variantProducts
-        .map(
-          product =>
-            product.price
-        )
-        .filter(
-          price =>
-            typeof price ===
-            "number"
-        );
-
-
-    const lowestVariantPrice =
-      numericPrices.length
-        ? Math.min(
-            ...numericPrices
+        [
+          ...new Set(
+            sortedProducts
+              .map(
+                product =>
+                  product.supplier
+              )
+              .filter(Boolean)
           )
-        : null;
+        ];
 
 
-    // =====================================
-    // BUILD SUPPLIER COLUMNS
-    // =====================================
 
-    const supplierCells =
-      supplierNames
-        .map(
-          supplierName => {
+      // =================================
+      // MATRIX ROWS
+      // =================================
 
-            const supplierProducts =
-              variantProducts
-                .filter(
-                  product =>
-                    product.supplier ===
-                    supplierName
-                )
-                .sort(
-                  (a, b) => {
+      const matrixRows =
+        [];
 
-                    const scoreA =
-                      Number(
-                        a.matchScore
-                      ) || 0;
 
 
-                    const scoreB =
-                      Number(
-                        b.matchScore
-                      ) || 0;
+      for (
+        const group
+        of productGroups
+      ) {
 
 
-                    if (
-                      scoreB !==
-                      scoreA
-                    ) {
+        const variants =
+          new Map();
 
-                      return (
-                        scoreB -
-                        scoreA
-                      );
-                    }
 
+        for (
+          const product
+          of group.products
+        ) {
 
-                    const priceA =
-                      typeof a.price ===
-                        "number"
-                        ? a.price
-                        : Infinity;
 
+          const category =
+            getCategory(
+              product
+            );
 
-                    const priceB =
-                      typeof b.price ===
-                        "number"
-                        ? b.price
-                        : Infinity;
 
+          if (
+            !variants.has(
+              category
+            )
+          ) {
 
-                    return (
-                      priceA -
-                      priceB
-                    );
-                  }
-                );
-
-
-            const product =
-              supplierProducts[0];
-
-
-            // Supplier doesn't carry
-            // this variant.
-
-            if (!product) {
-
-              return `
-
-                <div
-                  class="matrix-cell matrix-empty"
-                >
-
-                  <span>
-                    No matching listing
-                  </span>
-
-                </div>
-
-              `;
-            }
-
-
-            const priceDisplay =
-              typeof product.price ===
-                "number"
-
-                ? "$" +
-                  product.price
-                    .toFixed(2)
-
-                : "Check price";
-
-
-            const isLowestPrice =
-              lowestVariantPrice !==
-                null &&
-              product.price ===
-                lowestVariantPrice;
-
-
-            return `
-
-              <div
-                class="matrix-cell"
-              >
-
-
-                ${
-                  product.image
-                    ? `
-
-                      <img
-                        class="matrix-product-image"
-                        src="${escapeAttribute(
-                          product.image
-                        )}"
-                        alt="${escapeAttribute(
-                          product.title ||
-                          "Product image"
-                        )}"
-                        loading="lazy"
-                      >
-
-                    `
-                    : ""
-                }
-
-
-                <div
-                  class="matrix-price"
-                >
-
-                  ${escapeHtml(
-                    priceDisplay
-                  )}
-
-                  ${
-                    isLowestPrice
-                      ? `
-
-                        <span
-                          class="best-price"
-                        >
-                          Lowest price
-                        </span>
-
-                      `
-                      : ""
-                  }
-
-                </div>
-
-
-                <div
-                  class="matrix-stock"
-                >
-
-                  ${escapeHtml(
-                    product.stock ||
-                    "Check supplier"
-                  )}
-
-                </div>
-
-
-                ${
-                  product.confidence?.label
-                    ? `
-
-                      <span
-                        class="match-confidence match-confidence-${escapeAttribute(
-                          product.confidence.level ||
-                          "unknown"
-                        )}"
-                      >
-
-                        ${escapeHtml(
-                          product.confidence.label
-                        )}
-
-                      </span>
-
-                    `
-                    : ""
-                }
-
-
-                <div
-                  class="matrix-product-title"
-                >
-
-                  ${escapeHtml(
-                    product.title ||
-                    "Product"
-                  )}
-
-                </div>
-
-
-                ${
-                  product.sku
-                    ? `
-
-                      <small>
-                        SKU:
-                        ${escapeHtml(
-                          product.sku
-                        )}
-                      </small>
-
-                    `
-                    : ""
-                }
-
-
-                <a
-                  class="supplier-button"
-                  href="${escapeAttribute(
-                    product.url ||
-                    "#"
-                  )}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Supplier
-                </a>
-
-
-              </div>
-
-            `;
+            variants.set(
+              category,
+              []
+            );
           }
-        )
-        .join("");
 
 
-    // =====================================
-    // BUILD PRODUCT / VARIANT CELL
-    // =====================================
+          variants
+            .get(
+              category
+            )
+            .push(
+              product
+            );
 
-    const productCell = `
 
-      <div
-        class="matrix-product-cell"
-      >
-
-        ${
-          primary?.image
-            ? `
-
-              <img
-                class="matrix-family-image"
-                src="${escapeAttribute(
-                  primary.image
-                )}"
-                alt="${escapeAttribute(
-                  primary.title ||
-                  "Product"
-                )}"
-                loading="lazy"
-              >
-
-            `
-            : ""
         }
 
 
-        <strong>
-          ${escapeHtml(
-            variantLabel
-          )}
-        </strong>
+
+        for (
+          const [
+            variantKey,
+            variantProducts
+          ]
+          of variants
+        ) {
 
 
-        <span>
-          ${escapeHtml(
-            group.familyKey
-          )}
-        </span>
+          let variantLabel =
+            "Other";
 
 
-        <small>
+          if (
+            variantKey ===
+            "oem"
+          ) {
 
-          ${escapeHtml(
-            primary?.type ||
-            ""
-          )}
-
-        </small>
-
-      </div>
-
-    `;
+            variantLabel =
+              "OEM";
+          }
 
 
-    matrixRows.push(`
+          if (
+            variantKey ===
+            "aftermarket"
+          ) {
 
-      <div
-        class="comparison-matrix-row"
-      >
-
-        ${productCell}
-
-        ${supplierCells}
-
-      </div>
-
-    `);
-  }
-}
+            variantLabel =
+              "Aftermarket";
+          }
 
 
-// =====================================
-// MATRIX HEADER
-// =====================================
+          if (
+            variantKey ===
+            "refurbished"
+          ) {
 
-const matrixHeader = `
+            variantLabel =
+              "Refurbished OEM";
+          }
 
-  <div
-    class="comparison-matrix-header"
-  >
 
-    <div
-      class="matrix-header-cell matrix-product-heading"
-    >
-      Product
-    </div>
 
-    ${
-      supplierNames
-        .map(
-          supplierName => `
+          variantProducts.sort(
+            (a, b) => {
+
+
+              const scoreA =
+                Number(
+                  a.matchScore
+                ) || 0;
+
+
+              const scoreB =
+                Number(
+                  b.matchScore
+                ) || 0;
+
+
+              if (
+                scoreB !== scoreA
+              ) {
+
+                return (
+                  scoreB -
+                  scoreA
+                );
+              }
+
+
+              const priceA =
+                typeof a.price ===
+                  "number"
+                  ? a.price
+                  : Infinity;
+
+
+              const priceB =
+                typeof b.price ===
+                  "number"
+                  ? b.price
+                  : Infinity;
+
+
+              return (
+                priceA -
+                priceB
+              );
+
+            }
+          );
+
+
+
+          const primary =
+            variantProducts[0];
+
+
+
+          const numericPrices =
+            variantProducts
+              .map(
+                product =>
+                  product.price
+              )
+              .filter(
+                price =>
+                  typeof price ===
+                    "number"
+              );
+
+
+
+          const lowestVariantPrice =
+            numericPrices.length
+              ? Math.min(
+                  ...numericPrices
+                )
+              : null;
+
+
+
+          // ===============================
+          // SUPPLIER CELLS
+          // ===============================
+
+          const supplierCells =
+            supplierNames
+              .map(
+                supplierName => {
+
+
+                  const supplierProducts =
+                    variantProducts
+                      .filter(
+                        product =>
+                          product.supplier ===
+                          supplierName
+                      )
+                      .sort(
+                        (a, b) => {
+
+
+                          const scoreA =
+                            Number(
+                              a.matchScore
+                            ) || 0;
+
+
+                          const scoreB =
+                            Number(
+                              b.matchScore
+                            ) || 0;
+
+
+                          if (
+                            scoreB !==
+                            scoreA
+                          ) {
+
+                            return (
+                              scoreB -
+                              scoreA
+                            );
+                          }
+
+
+                          const priceA =
+                            typeof a.price ===
+                              "number"
+                              ? a.price
+                              : Infinity;
+
+
+                          const priceB =
+                            typeof b.price ===
+                              "number"
+                              ? b.price
+                              : Infinity;
+
+
+                          return (
+                            priceA -
+                            priceB
+                          );
+
+                        }
+                      );
+
+
+
+                  const product =
+                    supplierProducts[0];
+
+
+
+                  if (!product) {
+
+                    return `
+
+                      <div
+                        class="matrix-cell matrix-empty"
+                      >
+
+                        <span>
+                          No matching listing
+                        </span>
+
+                      </div>
+
+                    `;
+                  }
+
+
+
+                  const priceDisplay =
+                    typeof product.price ===
+                      "number"
+
+                      ? "$" +
+                        product.price
+                          .toFixed(2)
+
+                      : "Check price";
+
+
+
+                  const isLowestPrice =
+                    lowestVariantPrice !==
+                      null &&
+                    product.price ===
+                      lowestVariantPrice;
+
+
+
+                  return `
+
+                    <div
+                      class="matrix-cell"
+                    >
+
+
+                      ${
+                        product.image
+                          ? `
+
+                            <img
+                              class="matrix-product-image"
+                              src="${escapeAttribute(
+                                product.image
+                              )}"
+                              alt="${escapeAttribute(
+                                product.title ||
+                                "Product image"
+                              )}"
+                              loading="lazy"
+                            >
+
+                          `
+                          : ""
+                      }
+
+
+                      <div
+                        class="matrix-price"
+                      >
+
+                        ${escapeHtml(
+                          priceDisplay
+                        )}
+
+
+                        ${
+                          isLowestPrice
+                            ? `
+
+                              <span
+                                class="best-price"
+                              >
+                                Lowest price
+                              </span>
+
+                            `
+                            : ""
+                        }
+
+                      </div>
+
+
+                      <div
+                        class="matrix-stock"
+                      >
+
+                        ${escapeHtml(
+                          product.stock ||
+                          "Check supplier"
+                        )}
+
+                      </div>
+
+
+                      <div
+                        class="matrix-type"
+                      >
+
+                        ${escapeHtml(
+                          product.type ||
+                          "Type unknown"
+                        )}
+
+                      </div>
+
+
+                      ${
+                        product.confidence?.label
+                          ? `
+
+                            <span
+                              class="match-confidence match-confidence-${escapeAttribute(
+                                product.confidence.level ||
+                                "unknown"
+                              )}"
+                            >
+
+                              ${escapeHtml(
+                                product.confidence.label
+                              )}
+
+                            </span>
+
+                          `
+                          : ""
+                      }
+
+
+                      <div
+                        class="matrix-product-title"
+                      >
+
+                        ${escapeHtml(
+                          product.title ||
+                          "Product"
+                        )}
+
+                      </div>
+
+
+                      ${
+                        product.sku
+                          ? `
+
+                            <small>
+
+                              SKU:
+                              ${escapeHtml(
+                                product.sku
+                              )}
+
+                            </small>
+
+                          `
+                          : ""
+                      }
+
+
+                      <a
+                        class="supplier-button"
+                        href="${escapeAttribute(
+                          product.url ||
+                          "#"
+                        )}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+
+                        View Supplier
+
+                      </a>
+
+
+                    </div>
+
+                  `;
+
+
+                }
+              )
+              .join("");
+
+
+
+          // ===============================
+          // PRODUCT CELL
+          // ===============================
+
+          const productCell = `
 
             <div
-              class="matrix-header-cell"
+              class="matrix-product-cell"
             >
 
-              ${escapeHtml(
-                supplierName
-              )}
+
+              ${
+                primary?.image
+                  ? `
+
+                    <img
+                      class="matrix-family-image"
+                      src="${escapeAttribute(
+                        primary.image
+                      )}"
+                      alt="${escapeAttribute(
+                        primary.title ||
+                        "Product"
+                      )}"
+                      loading="lazy"
+                    >
+
+                  `
+                  : ""
+              }
+
+
+              <strong>
+
+                ${escapeHtml(
+                  variantLabel
+                )}
+
+              </strong>
+
+
+              <span>
+
+                ${escapeHtml(
+                  group.familyKey
+                )}
+
+              </span>
+
+
+              ${
+                primary?.confidence?.label
+                  ? `
+
+                    <span
+                      class="match-confidence match-confidence-${escapeAttribute(
+                        primary.confidence.level ||
+                        "unknown"
+                      )}"
+                    >
+
+                      ${escapeHtml(
+                        primary.confidence.label
+                      )}
+
+                    </span>
+
+                  `
+                  : ""
+              }
+
 
             </div>
 
-          `
-        )
-        .join("")
-    }
-
-  </div>
-
-`;
+          `;
 
 
-// Keep the existing variable name so the
-// rest of displayComparisonResults()
-// does not need to change.
 
-const supplierRows = `
+          matrixRows.push(`
 
-  <div
-    class="comparison-matrix"
-    style="--supplier-count: ${supplierNames.length};"
-  >
+            <div
+              class="comparison-matrix-row"
+            >
 
-    ${matrixHeader}
+              ${productCell}
 
-    ${matrixRows.join("")}
+              ${supplierCells}
 
-  </div>
+            </div>
 
-`;
+          `);
 
 
+        }
+
+
+      }
+
+
+
+      // =================================
+      // MATRIX HEADER
+      // =================================
+
+      const matrixHeader = `
+
+        <div
+          class="comparison-matrix-header"
+        >
+
+
+          <div
+            class="matrix-header-cell matrix-product-heading"
+          >
+            Product
+          </div>
+
+
+          ${
+            supplierNames
+              .map(
+                supplierName => `
+
+                  <div
+                    class="matrix-header-cell"
+                  >
+
+                    ${escapeHtml(
+                      supplierName
+                    )}
+
+                  </div>
+
+                `
+              )
+              .join("")
+          }
+
+
+        </div>
+
+      `;
+
+
+
+      // =================================
+      // COMPLETE MATRIX
+      // =================================
+
+      const supplierRows = `
+
+        <div
+          class="comparison-matrix"
+          style="--supplier-count: ${supplierNames.length};"
+        >
+
+          ${matrixHeader}
+
+          ${matrixRows.join("")}
+
+        </div>
+
+      `;
+
+
+
+      // =================================
+      // SUPPLIER STATUS
+      // =================================
 
       const suppliersChecked =
         supplierStatuses
@@ -2678,6 +1976,10 @@ const supplierRows = `
           .join(" • ");
 
 
+
+      // =================================
+      // RENDER
+      // =================================
 
       resultsSection.innerHTML = `
 
@@ -2714,12 +2016,12 @@ const supplierRows = `
               <p>
 
                 ${sortedProducts.length}
-matching product${
-  sortedProducts.length ===
-    1
-    ? ""
-    : "s"
-}
+                matching product${
+                  sortedProducts.length ===
+                    1
+                    ? ""
+                    : "s"
+                }
 
                 ${
                   suppliersChecked
@@ -2739,14 +2041,7 @@ matching product${
           </div>
 
 
-
-          <div
-            class="supplier-table"
-          >
-
-            ${supplierRows}
-
-          </div>
+          ${supplierRows}
 
 
         </article>
@@ -2759,7 +2054,152 @@ matching product${
 
 
     // =====================================================
-    // DATABASE FALLBACK
+    // COMPARE DISCOVERY PRODUCT
+    // =====================================================
+
+
+    async function compareSelectedProduct(
+      productTitle
+    ) {
+
+
+      const query =
+        String(
+          productTitle ||
+          ""
+        ).trim();
+
+
+      if (!query) {
+        return;
+      }
+
+
+      searchInput.value =
+        query;
+
+
+      searchButton.disabled =
+        true;
+
+
+      searchButton.textContent =
+        "Comparing...";
+
+
+      resultsSection.innerHTML = `
+
+        <div class="no-results">
+
+          <h2>
+            Comparing suppliers...
+          </h2>
+
+          <p>
+            KeyCache is looking for
+            equivalent listings.
+          </p>
+
+        </div>
+
+      `;
+
+
+
+      try {
+
+
+        const response =
+          await fetch(
+
+            "/api/live-search?q=" +
+            encodeURIComponent(
+              query
+            ) +
+            "&mode=comparison"
+
+          );
+
+
+        const result =
+          await response.json();
+
+
+
+        if (
+          !response.ok ||
+          !Array.isArray(
+            result.products
+          )
+        ) {
+
+          throw new Error(
+
+            result.error ||
+            "Comparison failed."
+
+          );
+        }
+
+
+        displayComparisonResults(
+
+          result.products,
+
+          query,
+
+          result.suppliers || []
+
+        );
+
+
+      } catch (error) {
+
+
+        console.error(
+          "COMPARISON ERROR:",
+          error
+        );
+
+
+        resultsSection.innerHTML = `
+
+          <div class="no-results">
+
+            <h2>
+              Comparison unavailable
+            </h2>
+
+            <p>
+              KeyCache couldn't compare
+              this product right now.
+            </p>
+
+          </div>
+
+        `;
+
+
+      } finally {
+
+
+        searchButton.disabled =
+          false;
+
+
+        searchButton.textContent =
+          "Search";
+
+
+      }
+
+
+    }
+
+
+
+    // =====================================================
+    // D1 DATABASE FALLBACK
     // =====================================================
 
 
@@ -2780,9 +2220,7 @@ matching product${
 
         resultsSection.innerHTML = `
 
-          <div
-            class="no-results"
-          >
+          <div class="no-results">
 
             <h2>
               No results found
@@ -2804,7 +2242,6 @@ matching product${
 
 
         return;
-
       }
 
 
@@ -2845,7 +2282,6 @@ matching product${
                         priceA -
                         priceB
                       );
-
 
                     }
                   );
@@ -2935,18 +2371,13 @@ matching product${
 
 
                         <a
-
                           class="supplier-button"
-
                           href="${escapeAttribute(
                             supplier.url ||
                             "#"
                           )}"
-
                           target="_blank"
-
                           rel="noopener noreferrer"
-
                         >
 
                           View Supplier
@@ -3105,7 +2536,6 @@ matching product${
 
               `;
 
-
             }
           )
           .join("");
@@ -3116,7 +2546,7 @@ matching product${
 
 
     // =====================================================
-    // SEARCH EVENTS
+    // EVENTS
     // =====================================================
 
 
@@ -3128,7 +2558,6 @@ matching product${
 
     searchInput.addEventListener(
       "keydown",
-
       function(event) {
 
 
@@ -3137,10 +2566,7 @@ matching product${
           "Enter"
         ) {
 
-
           performSearch();
-
-
         }
 
 
@@ -3149,154 +2575,44 @@ matching product${
 
 
 
+    // Discovery compare buttons.
+    // Using event delegation avoids fragile inline JS.
+
+    resultsSection.addEventListener(
+      "click",
+      function(event) {
+
+
+        const button =
+          event.target.closest(
+            ".compare-product-button"
+          );
+
+
+        if (!button) {
+          return;
+        }
+
+
+        const productTitle =
+          button.dataset.title ||
+          "";
+
+
+        compareSelectedProduct(
+          productTitle
+        );
+
+
+      }
+    );
+
+
+
     // =====================================================
-    // HTML SAFETY HELPERS
+    // SAFETY HELPERS
     // =====================================================
 
-    async function compareSelectedProduct(
-  productTitle
-) {
-
-  const query =
-    String(
-      productTitle || ""
-    ).trim();
-
-
-  if (!query) {
-    return;
-  }
-
-
-  searchInput.value =
-    query;
-
-
-  searchButton.disabled =
-    true;
-
-
-  searchButton.textContent =
-    "Comparing...";
-
-
-  resultsSection.innerHTML = `
-
-    <div class="no-results">
-
-      <h2>
-        Comparing suppliers...
-      </h2>
-
-      <p>
-        KeyCache is looking for
-        equivalent listings.
-      </p>
-
-    </div>
-
-  `;
-
-
-  try {
-
-    const response =
-      await fetch(
-
-        "/api/live-search?q=" +
-        encodeURIComponent(
-          query
-        ) +
-        "&mode=comparison"
-
-      );
-
-
-    const result =
-      await response.json();
-
-
-    if (
-      !response.ok ||
-      !Array.isArray(
-        result.products
-      )
-    ) {
-
-      throw new Error(
-        result.error ||
-        "Comparison failed."
-      );
-    }
-
-
-    displayComparisonResults(
-      result.products,
-      query,
-      result.suppliers || []
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "COMPARISON ERROR:",
-      error
-    );
-
-
-    resultsSection.innerHTML = `
-
-      <div class="no-results">
-
-        <h2>
-          Comparison unavailable
-        </h2>
-
-        <p>
-          KeyCache couldn't compare
-          this product right now.
-        </p>
-
-      </div>
-
-    `;
-
-  } finally {
-
-    searchButton.disabled =
-      false;
-
-
-    searchButton.textContent =
-      "Search";
-
-  }
-}
-
-    function escapeJs(
-  value
-) {
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /\\/g,
-      "\\\\"
-    )
-    .replace(
-      /'/g,
-      "\\'"
-    )
-    .replace(
-      /\r/g,
-      "\\r"
-    )
-    .replace(
-      /\n/g,
-      "\\n"
-    );
-}
 
     function escapeHtml(
       value
@@ -3354,6 +2670,11 @@ matching product${
         .replace(
           /"/g,
           "&quot;"
+        )
+
+        .replace(
+          /'/g,
+          "&#39;"
         )
 
         .replace(
