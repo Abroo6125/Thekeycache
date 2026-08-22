@@ -1785,7 +1785,228 @@ function scoreCandidate(
     }
   }
 
+    // =====================================
+  // CROSS-SUPPLIER IDENTIFIER MATCHING
+  // =====================================
 
+  // -------------------------------------
+  // FCC ID MATCHING
+  // -------------------------------------
+
+  // Look for common automotive FCC IDs
+  // inside the original buyer/comparison query.
+  //
+  // Example:
+  // HYQ14FBC-0351
+  // HYQ14FBC
+
+  const queryFccMatches =
+    queryLower.match(
+      /\b(?:hyq|kr5|m3n)[a-z0-9]{2,15}(?:-[a-z0-9]{2,10})?\b/gi
+    ) || [];
+
+
+  for (
+    const queryFcc
+    of queryFccMatches
+  ) {
+
+    const fullFcc =
+      queryFcc.toLowerCase();
+
+
+    const fccFamily =
+      fullFcc.split("-")[0];
+
+
+    // Exact full FCC match.
+    if (
+      titleLower.includes(fullFcc) ||
+      urlLower.includes(fullFcc)
+    ) {
+      score += 1000;
+    }
+
+
+    // Same FCC family.
+    //
+    // Example:
+    // query = HYQ14FBC-0351
+    // result = HYQ14FBC
+
+    if (
+      fccFamily &&
+      (
+        titleLower.includes(
+          fccFamily
+        ) ||
+        urlLower.includes(
+          fccFamily
+        )
+      )
+    ) {
+      score += 750;
+    }
+  }
+
+
+
+  // -------------------------------------
+  // OEM / PART NUMBER MATCHING
+  // -------------------------------------
+
+  const queryPartMatches =
+    queryLower.match(
+      /\b\d{4,6}-[a-z0-9]{4,8}\b/gi
+    ) || [];
+
+
+  for (
+    const partNumber
+    of queryPartMatches
+  ) {
+
+    // Ignore model-year ranges.
+    //
+    // Example:
+    // 2018-2024 should NOT count
+    // as an OEM part number.
+
+    const yearRange =
+      partNumber.match(
+        /^(\d{4})-(\d{4})$/
+      );
+
+
+    if (yearRange) {
+
+      const firstYear =
+        Number(
+          yearRange[1]
+        );
+
+
+      const secondYear =
+        Number(
+          yearRange[2]
+        );
+
+
+      if (
+        firstYear >= 1980 &&
+        firstYear <= 2100 &&
+        secondYear >= 1980 &&
+        secondYear <= 2100
+      ) {
+        continue;
+      }
+    }
+
+
+    const normalizedPart =
+      partNumber.toLowerCase();
+
+
+    if (
+      titleLower.includes(
+        normalizedPart
+      ) ||
+      urlLower.includes(
+        normalizedPart
+      )
+    ) {
+      score += 1000;
+    }
+  }
+
+
+
+  // -------------------------------------
+  // VEHICLE MODEL MATCHING
+  // -------------------------------------
+
+  const vehicleNames = [
+    "camry",
+    "corolla",
+    "rav4",
+    "highlander",
+    "tacoma",
+    "tundra",
+    "avalon",
+    "prius",
+    "4runner",
+    "sienna",
+    "yaris"
+  ];
+
+
+  for (
+    const vehicle
+    of vehicleNames
+  ) {
+
+    if (
+      queryLower.includes(
+        vehicle
+      ) &&
+      (
+        titleLower.includes(
+          vehicle
+        ) ||
+        urlLower.includes(
+          vehicle
+        )
+      )
+    ) {
+      score += 150;
+    }
+  }
+
+
+
+  // -------------------------------------
+  // BUTTON COUNT MATCHING
+  // -------------------------------------
+
+  const buttonMatch =
+    queryLower.match(
+      /\b([2-8])\s*(?:button|buttons|btn|b)\b/i
+    );
+
+
+  if (buttonMatch) {
+
+    const buttonCount =
+      buttonMatch[1];
+
+
+    const buttonPatterns = [
+      `${buttonCount} button`,
+      `${buttonCount}-button`,
+      `${buttonCount}button`,
+      `${buttonCount}b`
+    ];
+
+
+    for (
+      const pattern
+      of buttonPatterns
+    ) {
+
+      if (
+        titleLower.includes(
+          pattern
+        ) ||
+        urlLower.includes(
+          pattern
+        )
+      ) {
+        score += 100;
+        break;
+      }
+    }
+  }
+  
   // =====================================
   // H92 FAMILY BOOSTS
   // =====================================
