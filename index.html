@@ -959,7 +959,202 @@ ${product.image
     // EXACT PRODUCT COMPARISON
     // =====================================================
 
+function getProductFamilyKey(
+  product
+) {
+  const title =
+    String(
+      product?.title || ""
+    ).toLowerCase();
 
+
+  // =====================================
+  // FCC FAMILY
+  // =====================================
+
+  const fccMatch =
+    title.match(
+      /\b(?:hyq|kr5|m3n)[a-z0-9]{2,15}(?:-[a-z0-9]{2,10})?\b/i
+    );
+
+
+  if (fccMatch) {
+
+    const fccFamily =
+      fccMatch[0]
+        .split("-")[0]
+        .toUpperCase();
+
+
+    return (
+      "FCC:" +
+      fccFamily
+    );
+  }
+
+
+  // =====================================
+  // H-SERIES / COMMON KEY FAMILY
+  // =====================================
+
+  const keyFamilyMatch =
+    title.match(
+      /\bH\d{2,3}\b/i
+    );
+
+
+  if (keyFamilyMatch) {
+
+    return (
+      "KEY:" +
+      keyFamilyMatch[0]
+        .toUpperCase()
+    );
+  }
+
+
+  // =====================================
+  // FALLBACK
+  // =====================================
+
+  return (
+    "TITLE:" +
+    title
+      .replace(
+        /\b(oem|aftermarket|refurbished|new)\b/gi,
+        " "
+      )
+      .replace(
+        /[^a-z0-9]+/gi,
+        " "
+      )
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim()
+  );
+}
+
+    function groupComparisonProducts(
+  products
+) {
+  const groups =
+    new Map();
+
+
+  for (
+    const product
+    of products
+  ) {
+
+    const familyKey =
+      getProductFamilyKey(
+        product
+      );
+
+
+    if (
+      !groups.has(
+        familyKey
+      )
+    ) {
+
+      groups.set(
+        familyKey,
+        {
+          familyKey,
+          products: []
+        }
+      );
+    }
+
+
+    groups
+      .get(familyKey)
+      .products
+      .push(product);
+  }
+
+
+  const grouped =
+    Array.from(
+      groups.values()
+    );
+
+
+  // Lowest available price
+  // inside each family.
+
+  for (
+    const group
+    of grouped
+  ) {
+
+    const prices =
+      group.products
+        .map(
+          product =>
+            product.price
+        )
+        .filter(
+          price =>
+            typeof price ===
+            "number"
+        );
+
+
+    group.lowestPrice =
+      prices.length
+        ? Math.min(
+            ...prices
+          )
+        : null;
+
+
+    // Strongest matching product
+    // becomes the representative.
+
+    group.products.sort(
+      (a, b) =>
+        (
+          Number(
+            b.matchScore
+          ) || 0
+        ) -
+        (
+          Number(
+            a.matchScore
+          ) || 0
+        )
+    );
+
+
+    group.primary =
+      group.products[0];
+  }
+
+
+  // Strongest families first.
+
+  grouped.sort(
+    (a, b) =>
+      (
+        Number(
+          b.primary?.matchScore
+        ) || 0
+      ) -
+      (
+        Number(
+          a.primary?.matchScore
+        ) || 0
+      )
+  );
+
+
+  return grouped;
+}
+    
     function displayComparisonResults(
       products,
       query,
