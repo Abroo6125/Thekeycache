@@ -1156,63 +1156,820 @@ function getProductFamilyKey(
 }
     
     function displayComparisonResults(
-      products,
-      query,
-      supplierStatuses
-    ) {
+  products,
+  query,
+  supplierStatuses
+) {
 
+  // =====================================================
+  // SORT PRODUCTS
+  // =====================================================
 
-const sortedProducts =
-  [...products]
-    .sort(
+  const sortedProducts =
+    [...products].sort(
       (a, b) => {
 
         const scoreA =
-          typeof a.matchScore ===
-            "number"
+          typeof a.matchScore === "number"
             ? a.matchScore
             : 0;
 
-
         const scoreB =
-          typeof b.matchScore ===
-            "number"
+          typeof b.matchScore === "number"
             ? b.matchScore
             : 0;
 
 
-        if (
-          scoreB !== scoreA
-        ) {
-
-          return (
-            scoreB -
-            scoreA
-          );
-
+        if (scoreB !== scoreA) {
+          return scoreB - scoreA;
         }
 
 
         const priceA =
-          typeof a.price ===
-            "number"
+          typeof a.price === "number"
             ? a.price
             : Infinity;
 
-
         const priceB =
-          typeof b.price ===
-            "number"
+          typeof b.price === "number"
             ? b.price
             : Infinity;
 
 
-        return (
-          priceA -
-          priceB
+        return priceA - priceB;
+      }
+    );
+
+
+  // =====================================================
+  // GROUP PRODUCTS INTO FAMILIES
+  // =====================================================
+
+  const productGroups =
+    groupComparisonProducts(
+      sortedProducts
+    );
+
+
+  // =====================================================
+  // PRODUCT CATEGORY HELPER
+  // =====================================================
+
+  function getCategory(
+    product
+  ) {
+
+    const combined =
+      (
+        String(
+          product.type || ""
+        ) +
+        " " +
+        String(
+          product.title || ""
+        )
+      ).toLowerCase();
+
+
+    if (
+      combined.includes(
+        "aftermarket"
+      )
+    ) {
+      return "aftermarket";
+    }
+
+
+    if (
+      combined.includes(
+        "refurb"
+      )
+    ) {
+      return "refurbished";
+    }
+
+
+    if (
+      combined.includes(
+        "oem"
+      ) ||
+      combined.includes(
+        "strattec"
+      )
+    ) {
+      return "oem";
+    }
+
+
+    return "other";
+  }
+
+
+  // =====================================================
+  // SUPPLIER NAMES
+  // =====================================================
+
+  const supplierNames =
+    [
+      ...new Set(
+        sortedProducts
+          .map(
+            product =>
+              product.supplier
+          )
+          .filter(Boolean)
+      )
+    ];
+
+
+  // =====================================================
+  // BUILD MATRIX ROWS
+  // =====================================================
+
+  const matrixRows = [];
+
+
+  for (
+    const group
+    of productGroups
+  ) {
+
+    // -----------------------------------------------------
+    // Split each family into variants:
+    // OEM / Aftermarket / Refurbished / Other
+    // -----------------------------------------------------
+
+    const variants =
+      new Map();
+
+
+    for (
+      const product
+      of group.products
+    ) {
+
+      const category =
+        getCategory(
+          product
         );
 
+
+      if (
+        !variants.has(
+          category
+        )
+      ) {
+        variants.set(
+          category,
+          []
+        );
       }
+
+
+      variants
+        .get(category)
+        .push(product);
+    }
+
+
+    // -----------------------------------------------------
+    // BUILD EACH VARIANT ROW
+    // -----------------------------------------------------
+
+    for (
+      const [
+        variantKey,
+        variantProducts
+      ]
+      of variants
+    ) {
+
+      let variantLabel =
+        "Other";
+
+
+      if (
+        variantKey ===
+        "oem"
+      ) {
+        variantLabel =
+          "OEM";
+      }
+
+
+      if (
+        variantKey ===
+        "aftermarket"
+      ) {
+        variantLabel =
+          "Aftermarket";
+      }
+
+
+      if (
+        variantKey ===
+        "refurbished"
+      ) {
+        variantLabel =
+          "Refurbished OEM";
+      }
+
+
+      // -------------------------------------------------
+      // Strongest match becomes representative product
+      // -------------------------------------------------
+
+      variantProducts.sort(
+        (a, b) => {
+
+          const scoreA =
+            Number(
+              a.matchScore
+            ) || 0;
+
+          const scoreB =
+            Number(
+              b.matchScore
+            ) || 0;
+
+
+          if (
+            scoreB !== scoreA
+          ) {
+            return (
+              scoreB -
+              scoreA
+            );
+          }
+
+
+          const priceA =
+            typeof a.price ===
+              "number"
+              ? a.price
+              : Infinity;
+
+          const priceB =
+            typeof b.price ===
+              "number"
+              ? b.price
+              : Infinity;
+
+
+          return (
+            priceA -
+            priceB
+          );
+        }
+      );
+
+
+      const primary =
+        variantProducts[0];
+
+
+      // -------------------------------------------------
+      // Lowest price for this product variant
+      // -------------------------------------------------
+
+      const numericPrices =
+        variantProducts
+          .map(
+            product =>
+              product.price
+          )
+          .filter(
+            price =>
+              typeof price ===
+              "number"
+          );
+
+
+      const lowestVariantPrice =
+        numericPrices.length
+          ? Math.min(
+              ...numericPrices
+            )
+          : null;
+
+
+      // -------------------------------------------------
+      // BUILD SUPPLIER CELLS
+      // -------------------------------------------------
+
+      const supplierCells =
+        supplierNames
+          .map(
+            supplierName => {
+
+              const supplierProducts =
+                variantProducts
+                  .filter(
+                    product =>
+                      product.supplier ===
+                      supplierName
+                  )
+                  .sort(
+                    (a, b) => {
+
+                      const scoreA =
+                        Number(
+                          a.matchScore
+                        ) || 0;
+
+                      const scoreB =
+                        Number(
+                          b.matchScore
+                        ) || 0;
+
+
+                      if (
+                        scoreB !==
+                        scoreA
+                      ) {
+                        return (
+                          scoreB -
+                          scoreA
+                        );
+                      }
+
+
+                      const priceA =
+                        typeof a.price ===
+                          "number"
+                          ? a.price
+                          : Infinity;
+
+                      const priceB =
+                        typeof b.price ===
+                          "number"
+                          ? b.price
+                          : Infinity;
+
+
+                      return (
+                        priceA -
+                        priceB
+                      );
+                    }
+                  );
+
+
+              const product =
+                supplierProducts[0];
+
+
+              // -----------------------------------------
+              // Supplier has no match for this row
+              // -----------------------------------------
+
+              if (!product) {
+
+                return `
+
+                  <div
+                    class="matrix-cell matrix-empty"
+                  >
+
+                    <span>
+                      No matching listing
+                    </span>
+
+                  </div>
+
+                `;
+              }
+
+
+              // -----------------------------------------
+              // PRICE
+              // -----------------------------------------
+
+              const priceDisplay =
+                typeof product.price ===
+                  "number"
+
+                  ? "$" +
+                    product.price
+                      .toFixed(2)
+
+                  : "Check price";
+
+
+              const isLowestPrice =
+                lowestVariantPrice !==
+                  null &&
+                product.price ===
+                  lowestVariantPrice;
+
+
+              // -----------------------------------------
+              // SUPPLIER CELL
+              // -----------------------------------------
+
+              return `
+
+                <div
+                  class="matrix-cell"
+                >
+
+
+                  ${
+                    product.image
+                      ? `
+
+                        <img
+                          class="matrix-product-image"
+                          src="${escapeAttribute(
+                            product.image
+                          )}"
+                          alt="${escapeAttribute(
+                            product.title ||
+                            "Product image"
+                          )}"
+                          loading="lazy"
+                        >
+
+                      `
+                      : ""
+                  }
+
+
+                  <div
+                    class="matrix-price"
+                  >
+
+                    ${escapeHtml(
+                      priceDisplay
+                    )}
+
+
+                    ${
+                      isLowestPrice
+                        ? `
+
+                          <span
+                            class="best-price"
+                          >
+                            Lowest price
+                          </span>
+
+                        `
+                        : ""
+                    }
+
+                  </div>
+
+
+                  <div
+                    class="matrix-stock"
+                  >
+
+                    ${escapeHtml(
+                      product.stock ||
+                      "Check supplier"
+                    )}
+
+                  </div>
+
+
+                  <div
+                    class="matrix-type"
+                  >
+
+                    ${escapeHtml(
+                      product.type ||
+                      "Type unknown"
+                    )}
+
+                  </div>
+
+
+                  ${
+                    product.confidence?.label
+                      ? `
+
+                        <span
+                          class="match-confidence match-confidence-${escapeAttribute(
+                            product.confidence.level ||
+                            "unknown"
+                          )}"
+                        >
+
+                          ${escapeHtml(
+                            product.confidence.label
+                          )}
+
+                        </span>
+
+                      `
+                      : ""
+                  }
+
+
+                  <div
+                    class="matrix-product-title"
+                  >
+
+                    ${escapeHtml(
+                      product.title ||
+                      "Product"
+                    )}
+
+                  </div>
+
+
+                  ${
+                    product.sku
+                      ? `
+
+                        <small>
+
+                          SKU:
+                          ${escapeHtml(
+                            product.sku
+                          )}
+
+                        </small>
+
+                      `
+                      : ""
+                  }
+
+
+                  <a
+                    class="supplier-button"
+                    href="${escapeAttribute(
+                      product.url ||
+                      "#"
+                    )}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+
+                    View Supplier
+
+                  </a>
+
+
+                </div>
+
+              `;
+            }
+          )
+          .join("");
+
+
+      // -------------------------------------------------
+      // LEFT PRODUCT CELL
+      // -------------------------------------------------
+
+      const productCell = `
+
+        <div
+          class="matrix-product-cell"
+        >
+
+
+          ${
+            primary?.image
+              ? `
+
+                <img
+                  class="matrix-family-image"
+                  src="${escapeAttribute(
+                    primary.image
+                  )}"
+                  alt="${escapeAttribute(
+                    primary.title ||
+                    "Product"
+                  )}"
+                  loading="lazy"
+                >
+
+              `
+              : ""
+          }
+
+
+          <strong>
+            ${escapeHtml(
+              variantLabel
+            )}
+          </strong>
+
+
+          <span>
+            ${escapeHtml(
+              group.familyKey
+            )}
+          </span>
+
+
+          ${
+            primary?.confidence?.label
+              ? `
+
+                <span
+                  class="match-confidence match-confidence-${escapeAttribute(
+                    primary.confidence.level ||
+                    "unknown"
+                  )}"
+                >
+
+                  ${escapeHtml(
+                    primary.confidence.label
+                  )}
+
+                </span>
+
+              `
+              : ""
+          }
+
+
+          <small>
+
+            ${escapeHtml(
+              primary?.type ||
+              ""
+            )}
+
+          </small>
+
+
+        </div>
+
+      `;
+
+
+      matrixRows.push(`
+
+        <div
+          class="comparison-matrix-row"
+        >
+
+          ${productCell}
+
+          ${supplierCells}
+
+        </div>
+
+      `);
+    }
+  }
+
+
+  // =====================================================
+  // MATRIX HEADER
+  // =====================================================
+
+  const matrixHeader = `
+
+    <div
+      class="comparison-matrix-header"
+    >
+
+      <div
+        class="matrix-header-cell matrix-product-heading"
+      >
+        Product
+      </div>
+
+
+      ${
+        supplierNames
+          .map(
+            supplierName => `
+
+              <div
+                class="matrix-header-cell"
+              >
+
+                ${escapeHtml(
+                  supplierName
+                )}
+
+              </div>
+
+            `
+          )
+          .join("")
+      }
+
+    </div>
+
+  `;
+
+
+  // =====================================================
+  // FULL MATRIX
+  // =====================================================
+
+  const supplierRows = `
+
+    <div
+      class="comparison-matrix"
+      style="--supplier-count: ${supplierNames.length};"
+    >
+
+      ${matrixHeader}
+
+      ${matrixRows.join("")}
+
+    </div>
+
+  `;
+
+
+  // =====================================================
+  // SUPPLIER STATUS
+  // =====================================================
+
+  const suppliersChecked =
+    supplierStatuses
+      .filter(
+        supplier =>
+          supplier.ok
+      )
+      .map(
+        supplier =>
+          supplier.supplier
+      )
+      .join(" • ");
+
+
+  // =====================================================
+  // RENDER COMPARISON PAGE
+  // =====================================================
+
+  resultsSection.innerHTML = `
+
+    <article
+      class="product-result"
+    >
+
+
+      <div
+        class="product-header"
+      >
+
+
+        <div>
+
+
+          <span
+            class="result-label"
+          >
+            PRODUCT COMPARISON
+          </span>
+
+
+          <h2>
+
+            Results for
+            "${escapeHtml(
+              query
+            )}"
+
+          </h2>
+
+
+          <p>
+
+            ${sortedProducts.length}
+            matching product${
+              sortedProducts.length ===
+                1
+                ? ""
+                : "s"
+            }
+
+            ${
+              suppliersChecked
+                ? " • " +
+                  escapeHtml(
+                    suppliersChecked
+                  )
+                : ""
+            }
+
+          </p>
+
+
+        </div>
+
+
+      </div>
+
+
+      ${supplierRows}
+
+
+    </article>
+
+  `;
+}
     );
 
 
