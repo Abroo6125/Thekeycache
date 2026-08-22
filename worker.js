@@ -632,14 +632,17 @@ products.sort((a, b) => {
       url.pathname === "/api/health"
     ) {
       return json({
-        success: true,
+  success: true,
 
-        version:
-          "KEYCACHE_LIVE_SEARCH_V1",
+  version:
+    "KEYCACHE_LIVE_SEARCH_V1",
 
-        message:
-          "KeyCache API is alive."
-      });
+  build:
+    "QUERY_BUILDER_V2",
+
+  message:
+    "KeyCache API is alive."
+});
     }
 
 
