@@ -135,6 +135,9 @@ products.sort((a, b) => {
       queriesUsed:
         result.queriesUsed || [],
 
+      queryDiagnostics:
+  result.queryDiagnostics || [],
+
       error:
         result.error || null
     })
@@ -1202,6 +1205,8 @@ async function searchSupplier(
 
 const queryResults = [];
 
+const queryDiagnostics = [];
+
 
 for (
   const supplierQuery
@@ -1227,30 +1232,75 @@ for (
       );
 
 
-    if (!queryResponse.ok) {
-      continue;
-    }
+if (!queryResponse.ok) {
+
+  queryDiagnostics.push({
+    query:
+      supplierQuery,
+
+    status:
+      queryResponse.status,
+
+    ok:
+      false,
+
+    productsFound:
+      0
+  });
+
+  continue;
+}
 
 
     const queryData =
       await queryResponse.json();
 
 
-    const queryProducts =
-      queryData?.resources
-        ?.results
-        ?.products || [];
+const queryProducts =
+  queryData?.resources
+    ?.results
+    ?.products || [];
 
 
-    queryResults.push(
-      ...queryProducts
-    );
+queryDiagnostics.push({
+  query:
+    supplierQuery,
+
+  status:
+    queryResponse.status,
+
+  ok:
+    true,
+
+  productsFound:
+    queryProducts.length
+});
 
 
-  } catch {
-    // If one query fails,
-    // try the next one.
-  }
+queryResults.push(
+  ...queryProducts
+);
+
+
+ } catch (error) {
+
+  queryDiagnostics.push({
+    query:
+      supplierQuery,
+
+    status:
+      null,
+
+    ok:
+      false,
+
+    productsFound:
+      0,
+
+    error:
+      error.message
+  });
+}
 }
 
 
@@ -1482,6 +1532,8 @@ for (
 
   queriesUsed:
     searchQueries,
+
+  queryDiagnostics,
 
   products
 };
