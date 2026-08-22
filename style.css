@@ -706,3 +706,40 @@ footer {
   border-radius: 10px;
   margin-bottom: 8px;
 }
+
+.match-confidence {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.match-confidence-exact {
+  background: rgba(46, 125, 50, 0.12);
+  border: 1px solid rgba(46, 125, 50, 0.28);
+}
+
+.match-confidence-strong {
+  background: rgba(36, 101, 160, 0.10);
+  border: 1px solid rgba(36, 101, 160, 0.25);
+}
+
+.match-confidence-possible {
+  background: rgba(191, 113, 47, 0.10);
+  border: 1px solid rgba(191, 113, 47, 0.28);
+}
+
+.match-confidence-weak {
+  opacity: 0.72;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.supplier-shipping {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
