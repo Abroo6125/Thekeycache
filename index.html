@@ -1162,38 +1162,61 @@ function getProductFamilyKey(
     ) {
 
 
-      const sortedProducts =
-        [...products]
-          .sort(
-            (a, b) => {
+const sortedProducts =
+  [...products]
+    .sort(
+      (a, b) => {
+
+        const scoreA =
+          typeof a.matchScore ===
+            "number"
+            ? a.matchScore
+            : 0;
 
 
-              const scoreA =
-                typeof a.matchScore ===
-                  "number"
-                  ? a.matchScore
-                  : 0;
+        const scoreB =
+          typeof b.matchScore ===
+            "number"
+            ? b.matchScore
+            : 0;
 
 
-              const scoreB =
-                typeof b.matchScore ===
-                  "number"
-                  ? b.matchScore
-                  : 0;
+        if (
+          scoreB !== scoreA
+        ) {
+
+          return (
+            scoreB -
+            scoreA
+          );
+
+        }
 
 
-           if (
-  scoreB !== scoreA
-) {
+        const priceA =
+          typeof a.price ===
+            "number"
+            ? a.price
+            : Infinity;
 
-  return (
-    scoreB -
-    scoreA
-  );
 
-}
-);
-      const productGroups =
+        const priceB =
+          typeof b.price ===
+            "number"
+            ? b.price
+            : Infinity;
+
+
+        return (
+          priceA -
+          priceB
+        );
+
+      }
+    );
+
+
+const productGroups =
   groupComparisonProducts(
     sortedProducts
   );
