@@ -2044,37 +2044,51 @@ function buildComparisonQueries(
       .trim();
 
 
-  const queries =
-    [];
+  const queries = [];
 
 
   // =====================================
   // FCC ID
   // =====================================
 
- const fccMatches =
-  original.match(
-    /\b[A-Z]{2,5}\d[A-Z0-9]{2,15}(?:-[A-Z0-9]{2,10})?\b/g
-  ) || [];
+  const fccMatches =
+    original.match(
+      /\b(?:HYQ|KR5|M3N)[A-Z0-9]{2,15}(?:-[A-Z0-9]{2,10})?\b/gi
+    ) || [];
 
 
-  for (
-    const match
-    of fccMatches
-  ) {
+  const fccId =
+    fccMatches.length
+      ? fccMatches[0]
+      : "";
 
-    const upper =
-      match.toUpperCase();
+
+  if (fccId) {
+
+    // Full FCC ID first.
+    queries.push(
+      fccId
+    );
+
+
+    // Also try the FCC family without
+    // the suffix after the hyphen.
+    //
+    // Example:
+    // HYQ14FBC-0351
+    // becomes
+    // HYQ14FBC
+
+    const shortFcc =
+      fccId.split("-")[0];
 
 
     if (
-      upper.includes("HYQ") ||
-      upper.includes("KR5") ||
-      upper.includes("M3N") ||
-      upper.includes("FCC")
+      shortFcc &&
+      shortFcc !== fccId
     ) {
       queries.push(
-        match
+        shortFcc
       );
     }
   }
@@ -2084,10 +2098,54 @@ function buildComparisonQueries(
   // OEM / PART NUMBERS
   // =====================================
 
-  const partMatches =
+  const rawPartMatches =
     original.match(
       /\b\d{4,6}-[A-Z0-9]{4,8}\b/gi
     ) || [];
+
+
+  const partMatches =
+    rawPartMatches.filter(
+      value => {
+
+        // Do NOT mistake year ranges
+        // such as 2018-2024
+        // for OEM part numbers.
+
+        const yearRange =
+          value.match(
+            /^(\d{4})-(\d{4})$/
+          );
+
+
+        if (yearRange) {
+
+          const firstYear =
+            Number(
+              yearRange[1]
+            );
+
+
+          const secondYear =
+            Number(
+              yearRange[2]
+            );
+
+
+          if (
+            firstYear >= 1980 &&
+            firstYear <= 2100 &&
+            secondYear >= 1980 &&
+            secondYear <= 2100
+          ) {
+            return false;
+          }
+        }
+
+
+        return true;
+      }
+    );
 
 
   queries.push(
@@ -2096,18 +2154,19 @@ function buildComparisonQueries(
 
 
   // =====================================
-  // COMMON LOCKSMITH IDENTIFIERS
+  // VEHICLE / APPLICATION
   // =====================================
 
-  const identifierMatches =
+  const vehicleMatch =
     original.match(
-      /\b[A-Z]{1,5}\d{2,8}(?:-[A-Z0-9]+)?\b/gi
-    ) || [];
+      /\b(Camry|Corolla|RAV4|Highlander|Tacoma|Tundra|Avalon|Prius|4Runner|Sienna|Yaris)\b/i
+    );
 
 
-  queries.push(
-    ...identifierMatches
-  );
+  const vehicle =
+    vehicleMatch
+      ? vehicleMatch[1]
+      : "";
 
 
   // =====================================
@@ -2118,6 +2177,10 @@ function buildComparisonQueries(
     original
       .replace(
         /\baftermarket\b/gi,
+        " "
+      )
+      .replace(
+        /\brefurbished\b/gi,
         " "
       )
       .replace(
@@ -2143,16 +2206,11 @@ function buildComparisonQueries(
       .replace(
         /\bpart\s*(number|no\.?)\s*:?\s*/gi,
         " "
-      )
-      .replace(
-        /\s+/g,
-        " "
-      )
-      .trim();
+      );
 
 
-  // Remove identifiers we already extracted
-  // from the human-readable fallback query.
+  // Remove identifiers from the
+  // descriptive search.
 
   for (
     const identifier
@@ -2163,71 +2221,68 @@ function buildComparisonQueries(
   ) {
 
     cleaned =
-      cleaned
-        .replace(
-          identifier,
-          " "
-        )
-        .replace(
-          /\s+/g,
-          " "
-        )
-        .trim();
+      cleaned.replace(
+        identifier,
+        " "
+      );
   }
 
 
- if (cleaned) {
-  queries.push(
+  cleaned =
     cleaned
-  );
-}
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim();
 
 
-// =====================================
-// SUPPLIER-FRIENDLY FALLBACKS
-// =====================================
-
-const fccId =
-  fccMatches.find(
-    value =>
-      /^(HYQ|KR5|M3N)/i.test(value)
-  );
-
-const vehicleMatch =
-  original.match(
-    /\b(Camry|Corolla|RAV4|Highlander|Tacoma|Tundra|Avalon|Prius|4Runner|Sienna|Yaris)\b/i
-  );
-
-const vehicle =
-  vehicleMatch
-    ? vehicleMatch[1]
-    : "";
-
-
-if (
-  vehicle &&
-  fccId
-) {
-  queries.push(
-    `${vehicle} Smart Key ${fccId}`
-  );
-
-  queries.push(
-    `Toyota ${vehicle} ${fccId}`
-  );
-}
+  if (cleaned) {
+    queries.push(
+      cleaned
+    );
+  }
 
 
   // =====================================
-  // FINAL FALLBACK
+  // SUPPLIER-FRIENDLY FALLBACKS
   // =====================================
 
-  queries.push(
-    original
-  );
+  if (
+    vehicle &&
+    fccId
+  ) {
+
+    const shortFcc =
+      fccId.split("-")[0];
 
 
-  // Remove duplicates and blanks.
+    queries.push(
+      `${vehicle} smart key ${shortFcc}`
+    );
+
+
+    queries.push(
+      `Toyota ${vehicle} ${shortFcc}`
+    );
+  }
+
+
+  // =====================================
+  // FALLBACK WITHOUT FCC
+  // =====================================
+
+  if (vehicle) {
+
+    queries.push(
+      `Toyota ${vehicle} smart key`
+    );
+  }
+
+
+  // =====================================
+  // REMOVE DUPLICATES
+  // =====================================
 
   return [
     ...new Set(
@@ -2241,7 +2296,7 @@ if (
     )
   ].slice(
     0,
-    5
+    6
   );
 }
 
