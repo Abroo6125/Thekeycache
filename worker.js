@@ -1433,38 +1433,50 @@ for (
             );
 
 
-          return {
-            supplier:
-              supplier.name,
+          const confidence =
+  classifyMatchConfidence(
+    matchScore
+  );
 
-            title,
+return {
+  supplier:
+    supplier.name,
 
-            price,
+  title,
 
-            sku:
-              "",
+  price,
 
-            stock:
-              product.available === true
-                ? "In stock"
-                : product.available === false
-                  ? "Out of stock"
-                  : "Check supplier",
+  sku:
+    "",
 
-            type:
-              classifySearchProduct(
-                product,
-                title
-              ),
+  stock:
+    product.available === true
+      ? "In stock"
+      : product.available === false
+        ? "Out of stock"
+        : "Check supplier",
 
-            url:
-              productUrl,
+  type:
+    classifySearchProduct(
+      product,
+      title
+    ),
 
-            matchScore,
+  url:
+    productUrl,
 
-            searchStage:
-              "predictive-json"
-          };
+  matchScore,
+
+  confidence,
+
+  image:
+    extractSearchImage(
+      product
+    ),
+
+  searchStage:
+    "predictive-json"
+};
         })
 
 
@@ -2295,6 +2307,84 @@ async function fetchWithTimeout(
 // =========================================================
 // GENERAL HELPERS
 // =========================================================
+
+function classifyMatchConfidence(
+  score
+) {
+  const value =
+    Number(score) || 0;
+
+  if (value >= 3000) {
+    return {
+      level:
+        "exact",
+
+      label:
+        "Exact / very high confidence"
+    };
+  }
+
+  if (value >= 1500) {
+    return {
+      level:
+        "strong",
+
+      label:
+        "Strong match"
+    };
+  }
+
+  if (value >= 700) {
+    return {
+      level:
+        "possible",
+
+      label:
+        "Possible match - verify application"
+    };
+  }
+
+  return {
+    level:
+      "weak",
+
+    label:
+      "Low confidence"
+  };
+}
+
+
+function extractSearchImage(
+  product
+) {
+  const image =
+    product.image ||
+    product.featured_image ||
+    product.featuredImage ||
+    product.image_url ||
+    product.imageUrl ||
+    "";
+
+  if (
+    typeof image === "string"
+  ) {
+    return image;
+  }
+
+  if (
+    image &&
+    typeof image === "object"
+  ) {
+    return (
+      image.url ||
+      image.src ||
+      image.originalSrc ||
+      ""
+    );
+  }
+
+  return "";
+}
 
 function detectSearchMode(query) {
   const text =
