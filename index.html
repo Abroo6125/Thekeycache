@@ -1274,18 +1274,50 @@ ${product.image
 
 
 
-                  <div
-                    class="supplier-shipping"
-                  >
+               <div
+  class="supplier-shipping"
+>
 
-                    ${escapeHtml(
-                      product.type ||
-                      "Type unknown"
-                    )}
+  <span>
+    ${escapeHtml(
+      product.type ||
+      "Type unknown"
+    )}
+  </span>
 
-                    ${
-                      product.sku
-                        ? `
+  ${
+    product.confidence?.label
+      ? `
+        <span
+          class="match-confidence match-confidence-${escapeAttribute(
+            product.confidence.level ||
+            "unknown"
+          )}"
+        >
+          ${escapeHtml(
+            product.confidence.label
+          )}
+        </span>
+      `
+      : ""
+  }
+
+  ${
+    product.sku
+      ? `
+        <small>
+
+          SKU:
+          ${escapeHtml(
+            product.sku
+          )}
+
+        </small>
+      `
+      : ""
+  }
+
+</div>
 
                           <br>
 
