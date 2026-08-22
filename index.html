@@ -1191,6 +1191,11 @@ function getProductFamilyKey(
                   scoreA
                 );
 
+                const productGroups =
+  groupComparisonProducts(
+    sortedProducts
+  );
+
               }
 
 
@@ -1336,229 +1341,548 @@ function getProductFamilyKey(
 
 
 
-      const supplierRows =
-        sortedProducts
-          .map(
-            product => {
+      const supplierNames =
+  [
+    ...new Set(
+      sortedProducts
+        .map(
+          product =>
+            product.supplier
+        )
+        .filter(Boolean)
+    )
+  ];
 
 
-              const category =
-                getCategory(
-                  product
+const matrixRows = [];
+
+
+for (
+  const group
+  of productGroups
+) {
+
+  // =====================================
+  // SPLIT FAMILY INTO PRODUCT VARIANTS
+  //
+  // For now:
+  // OEM / Aftermarket / Refurbished / Other
+  // become separate comparison rows.
+  // =====================================
+
+  const variants =
+    new Map();
+
+
+  for (
+    const product
+    of group.products
+  ) {
+
+    const category =
+      getCategory(
+        product
+      );
+
+
+    const variantKey =
+      category ||
+      "other";
+
+
+    if (
+      !variants.has(
+        variantKey
+      )
+    ) {
+
+      variants.set(
+        variantKey,
+        []
+      );
+    }
+
+
+    variants
+      .get(
+        variantKey
+      )
+      .push(
+        product
+      );
+  }
+
+
+  for (
+    const [
+      variantKey,
+      variantProducts
+    ]
+    of variants
+  ) {
+
+    // =====================================
+    // FRIENDLY VARIANT NAME
+    // =====================================
+
+    let variantLabel =
+      "Other";
+
+
+    if (
+      variantKey ===
+      "oem"
+    ) {
+      variantLabel =
+        "OEM";
+    }
+
+
+    if (
+      variantKey ===
+      "aftermarket"
+    ) {
+      variantLabel =
+        "Aftermarket";
+    }
+
+
+    if (
+      variantKey ===
+      "refurbished"
+    ) {
+      variantLabel =
+        "Refurbished OEM";
+    }
+
+
+    // =====================================
+    // REPRESENTATIVE PRODUCT
+    // =====================================
+
+    variantProducts.sort(
+      (a, b) =>
+        (
+          Number(
+            b.matchScore
+          ) || 0
+        ) -
+        (
+          Number(
+            a.matchScore
+          ) || 0
+        )
+    );
+
+
+    const primary =
+      variantProducts[0];
+
+
+    // =====================================
+    // LOWEST PRICE IN THIS VARIANT
+    // =====================================
+
+    const numericPrices =
+      variantProducts
+        .map(
+          product =>
+            product.price
+        )
+        .filter(
+          price =>
+            typeof price ===
+            "number"
+        );
+
+
+    const lowestVariantPrice =
+      numericPrices.length
+        ? Math.min(
+            ...numericPrices
+          )
+        : null;
+
+
+    // =====================================
+    // BUILD SUPPLIER COLUMNS
+    // =====================================
+
+    const supplierCells =
+      supplierNames
+        .map(
+          supplierName => {
+
+            const supplierProducts =
+              variantProducts
+                .filter(
+                  product =>
+                    product.supplier ===
+                    supplierName
+                )
+                .sort(
+                  (a, b) => {
+
+                    const scoreA =
+                      Number(
+                        a.matchScore
+                      ) || 0;
+
+
+                    const scoreB =
+                      Number(
+                        b.matchScore
+                      ) || 0;
+
+
+                    if (
+                      scoreB !==
+                      scoreA
+                    ) {
+
+                      return (
+                        scoreB -
+                        scoreA
+                      );
+                    }
+
+
+                    const priceA =
+                      typeof a.price ===
+                        "number"
+                        ? a.price
+                        : Infinity;
+
+
+                    const priceB =
+                      typeof b.price ===
+                        "number"
+                        ? b.price
+                        : Infinity;
+
+
+                    return (
+                      priceA -
+                      priceB
+                    );
+                  }
                 );
 
 
-              const priceDisplay =
-                typeof product.price ===
-                  "number"
-
-                  ? "$" +
-                    product.price
-                      .toFixed(2)
-
-                  : "Check price";
+            const product =
+              supplierProducts[0];
 
 
+            // Supplier doesn't carry
+            // this variant.
 
-              let priceBadge =
-                "";
-
-
-
-              if (
-                category ===
-                  "oem" &&
-                lowestOemPrice !==
-                  null &&
-                product.price ===
-                  lowestOemPrice
-              ) {
-
-
-                priceBadge = `
-
-                  <span
-                    class="best-price"
-                  >
-                    Lowest OEM
-                  </span>
-
-                `;
-
-              }
-
-
-
-              if (
-                category ===
-                  "aftermarket" &&
-                lowestAftermarketPrice !==
-                  null &&
-                product.price ===
-                  lowestAftermarketPrice
-              ) {
-
-
-                priceBadge = `
-
-                  <span
-                    class="best-price"
-                  >
-                    Lowest aftermarket
-                  </span>
-
-                `;
-
-              }
-
-
+            if (!product) {
 
               return `
 
                 <div
-                  class="supplier-row"
+                  class="matrix-cell matrix-empty"
                 >
 
-
-                  <div
-                    class="supplier-info"
-                  >
-
-${product.image
-  ? `
-    <img
-      class="supplier-product-image"
-      src="${escapeAttribute(product.image)}"
-      alt="${escapeAttribute(product.title || "Product image")}"
-      loading="lazy"
-    >
-  `
-  : ""
-}
-
-                    <strong>
-
-                      ${escapeHtml(
-                        product.supplier ||
-                        "Supplier"
-                      )}
-
-                    </strong>
-
-
-                    <span>
-
-                      ${escapeHtml(
-                        product.title ||
-                        product.type ||
-                        "Product"
-                      )}
-
-                    </span>
-
-
-                  </div>
-
-
-
-                  <div
-                    class="supplier-price"
-                  >
-
-                    ${priceDisplay}
-
-                    ${priceBadge}
-
-                  </div>
-
-
-
-                  <div
-                    class="supplier-stock"
-                  >
-
-                    ${escapeHtml(
-                      product.stock ||
-                      "Check supplier"
-                    )}
-
-                  </div>
-
-
-
-               <div
-  class="supplier-shipping"
->
-
-  <span>
-    ${escapeHtml(
-      product.type ||
-      "Type unknown"
-    )}
-  </span>
-
-  ${
-    product.confidence?.label
-      ? `
-        <span
-          class="match-confidence match-confidence-${escapeAttribute(
-            product.confidence.level ||
-            "unknown"
-          )}"
-        >
-          ${escapeHtml(
-            product.confidence.label
-          )}
-        </span>
-      `
-      : ""
-  }
-
-  ${
-    product.sku
-      ? `
-        <small>
-
-          SKU:
-          ${escapeHtml(
-            product.sku
-          )}
-
-        </small>
-      `
-      : ""
-  }
-
-</div>
-
-                  <a
-
-                    class="supplier-button"
-
-                    href="${escapeAttribute(
-                      product.url ||
-                      "#"
-                    )}"
-
-                    target="_blank"
-
-                    rel="noopener noreferrer"
-
-                  >
-
-                    View Supplier
-
-                  </a>
-
+                  <span>
+                    No matching listing
+                  </span>
 
                 </div>
 
               `;
-
-
             }
-          )
-          .join("");
+
+
+            const priceDisplay =
+              typeof product.price ===
+                "number"
+
+                ? "$" +
+                  product.price
+                    .toFixed(2)
+
+                : "Check price";
+
+
+            const isLowestPrice =
+              lowestVariantPrice !==
+                null &&
+              product.price ===
+                lowestVariantPrice;
+
+
+            return `
+
+              <div
+                class="matrix-cell"
+              >
+
+
+                ${
+                  product.image
+                    ? `
+
+                      <img
+                        class="matrix-product-image"
+                        src="${escapeAttribute(
+                          product.image
+                        )}"
+                        alt="${escapeAttribute(
+                          product.title ||
+                          "Product image"
+                        )}"
+                        loading="lazy"
+                      >
+
+                    `
+                    : ""
+                }
+
+
+                <div
+                  class="matrix-price"
+                >
+
+                  ${escapeHtml(
+                    priceDisplay
+                  )}
+
+                  ${
+                    isLowestPrice
+                      ? `
+
+                        <span
+                          class="best-price"
+                        >
+                          Lowest price
+                        </span>
+
+                      `
+                      : ""
+                  }
+
+                </div>
+
+
+                <div
+                  class="matrix-stock"
+                >
+
+                  ${escapeHtml(
+                    product.stock ||
+                    "Check supplier"
+                  )}
+
+                </div>
+
+
+                ${
+                  product.confidence?.label
+                    ? `
+
+                      <span
+                        class="match-confidence match-confidence-${escapeAttribute(
+                          product.confidence.level ||
+                          "unknown"
+                        )}"
+                      >
+
+                        ${escapeHtml(
+                          product.confidence.label
+                        )}
+
+                      </span>
+
+                    `
+                    : ""
+                }
+
+
+                <div
+                  class="matrix-product-title"
+                >
+
+                  ${escapeHtml(
+                    product.title ||
+                    "Product"
+                  )}
+
+                </div>
+
+
+                ${
+                  product.sku
+                    ? `
+
+                      <small>
+                        SKU:
+                        ${escapeHtml(
+                          product.sku
+                        )}
+                      </small>
+
+                    `
+                    : ""
+                }
+
+
+                <a
+                  class="supplier-button"
+                  href="${escapeAttribute(
+                    product.url ||
+                    "#"
+                  )}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View Supplier
+                </a>
+
+
+              </div>
+
+            `;
+          }
+        )
+        .join("");
+
+
+    // =====================================
+    // BUILD PRODUCT / VARIANT CELL
+    // =====================================
+
+    const productCell = `
+
+      <div
+        class="matrix-product-cell"
+      >
+
+        ${
+          primary?.image
+            ? `
+
+              <img
+                class="matrix-family-image"
+                src="${escapeAttribute(
+                  primary.image
+                )}"
+                alt="${escapeAttribute(
+                  primary.title ||
+                  "Product"
+                )}"
+                loading="lazy"
+              >
+
+            `
+            : ""
+        }
+
+
+        <strong>
+          ${escapeHtml(
+            variantLabel
+          )}
+        </strong>
+
+
+        <span>
+          ${escapeHtml(
+            group.familyKey
+          )}
+        </span>
+
+
+        <small>
+
+          ${escapeHtml(
+            primary?.type ||
+            ""
+          )}
+
+        </small>
+
+      </div>
+
+    `;
+
+
+    matrixRows.push(`
+
+      <div
+        class="comparison-matrix-row"
+      >
+
+        ${productCell}
+
+        ${supplierCells}
+
+      </div>
+
+    `);
+  }
+}
+
+
+// =====================================
+// MATRIX HEADER
+// =====================================
+
+const matrixHeader = `
+
+  <div
+    class="comparison-matrix-header"
+  >
+
+    <div
+      class="matrix-header-cell matrix-product-heading"
+    >
+      Product
+    </div>
+
+    ${
+      supplierNames
+        .map(
+          supplierName => `
+
+            <div
+              class="matrix-header-cell"
+            >
+
+              ${escapeHtml(
+                supplierName
+              )}
+
+            </div>
+
+          `
+        )
+        .join("")
+    }
+
+  </div>
+
+`;
+
+
+// Keep the existing variable name so the
+// rest of displayComparisonResults()
+// does not need to change.
+
+const supplierRows = `
+
+  <div
+    class="comparison-matrix"
+    style="--supplier-count: ${supplierNames.length};"
+  >
+
+    ${matrixHeader}
+
+    ${matrixRows.join("")}
+
+  </div>
+
+`;
 
 
 
